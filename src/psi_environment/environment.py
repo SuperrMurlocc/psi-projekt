@@ -1,4 +1,6 @@
 import random
+from typing import Any
+
 import numpy as np
 from collections import deque
 
@@ -37,3 +39,15 @@ class Environment:
                 if self._map[y, x] != 0:
                     self._edges[(y, x)] = deque()
                     self._edges[(x, y)] = deque()
+
+    def step(self, action) -> tuple[Any, float, bool]:
+        """
+        Accepts action provided by agent when has to decide where to go. After that environment continues simulation
+        and returns another observation of the environment and cost it took by taking the action.
+        :param action: direction where agent wants to go
+        :return: tuple of environment observation, cost of this action and bool stating if the agent has finished
+        """
+        # TODO: This requires a focus if only this will be returned.
+        #  Also I'm not sure about how observation will look like.
+        #  And the implementation of it has not started
+        raise NotImplementedError
