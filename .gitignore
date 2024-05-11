@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+.Python
+build/
+dist/
+sdist/
+var/
+wheels/
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+cover/
+coverage.xml
+.coverage
+.cache
+.pytest*
+
+# Jupyter Notebook
+.ipynb_checkpoints
+notebooks/*
+
+# mypy
+.mypy*
+
+# PyCharm
+.idea
+
+# VisualStudioCode
+.vscode
+
+# VIM
+*.swp
+
+# Local History for Visual Studio Code
+.history/
