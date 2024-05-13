@@ -1,38 +1,21 @@
 import random
 from typing import Any
-
 import numpy as np
 from collections import deque
+import pygame
 
-from psi_environment.game.game import Game
-
-def get_map() -> np.ndarray:
-    """
-    Generates adjacency matrix of a simple static map
-    :return: adjacency matrix of the map as a numpy array
-    """
-    adjacency_matrix = np.array([
-        [0, 1, 0, 0, 1, 0, 0, 0],
-        [1, 0, 1, 0, 0, 1, 0, 0],
-        [0, 1, 0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 1, 0, 0],
-        [0, 1, 0, 0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0, 1, 0, 1],
-        [0, 0, 0, 1, 0, 0, 1, 0],
-    ])
-    return adjacency_matrix
-
-
-class Environment:
-    def __init__(self, random_seed: int = None):
+class Game:
+    def __init__(self, crossroads, random_seed: int = None):
         if random_seed is None:
             random_seed = random.randint(0, 2137)
         self._random_seed = random_seed
         self._timestep = 0
-        self._map = get_map()
-        self._game = Game(self._map, random_seed=random_seed)
-        self._is_running = True
+        self._map = crossroads
+        pygame.init()
+        self._screen = pygame.display.set_mode((1280, 720))
+        self._clock = pygame.time.Clock()
+        self._running = True
+
         # Preparing 2-directional queue for each connection between crossroads
         self._edges = {}
         for y in range(self._map.shape[0]):
@@ -53,36 +36,38 @@ class Environment:
         #  How will be direction handled so it will be consistent. I suggest something like a clock
         #  but it will require some extra checks of edges.
         #  And the implementation of it has not started
-        return self._game.step(action)
-
+        self.render()
+        self.is_running()
+        
     def get_timestep(self) -> int:
         """
         Returns timestep of the environment
         :return: timestep of the environment
         """
-        return self._game.get_timestep()      
-     
+        return self._timestep
+    
     def reset(self):
         """
         Resets environment to the initial state
         """
-        return self._game.reset()
-    
+        raise NotImplementedError
+
+    def render(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self._running = False
+
+        # fill the screen with a color to wipe away anything from last frame
+        self._screen.fill("purple")
+
+        # RENDER YOUR GAME HERE
+
+        # flip() the display to put your work on screen
+        pygame.display.flip()
+
+        self._clock.tick(60)  # limits FPS to 60
+
     def is_running(self):
-        self._is_running = self._game.is_running()
-        return self._is_running
+        return self._running
 
-class DummyAgent:
-    def __init__(self, parent_env: Environment, position: tuple[int, int], random_seed: int):
-        """
-        :param parent_env: environment in which this agent is placed (may be useful to get current timestep)
-        :param position: y, x coordinates of a dummy agent position
-        :param random_seed: seed that will be used to take actions
-        """
-        self._parent_env = parent_env
-        self._position = position
-        self._random_seed = random_seed
-
-    def get_action(self) -> int:
-        return (self._random_seed + self._parent_env.get_timestep()) % 3
-
+pygame.quit()
