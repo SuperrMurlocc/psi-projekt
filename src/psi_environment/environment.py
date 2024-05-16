@@ -29,7 +29,6 @@ class Environment:
         if random_seed is None:
             random_seed = random.randint(0, 2137)
         self._random_seed = random_seed
-        self._timestep = 0
         self._map = get_map()
         self._game = Game(self._map, random_seed=random_seed)
         self._is_running = True
