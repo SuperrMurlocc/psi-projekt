@@ -36,7 +36,7 @@ class Environment:
         self._edges = {}
         for y in range(self._map.shape[0]):
             for x in range(y, self._map.shape[1]):
-                if self._map[y, x] != 0:
+                if self._map[y, x] != np.nan:
                     self._edges[(y, x)] = deque()
                     self._edges[(x, y)] = deque()
 
@@ -66,6 +66,15 @@ class Environment:
         Resets environment to the initial state
         """
         return self._game.reset()
+
+    def get_map_size(self):
+        return self._map.shape[0]
+
+    def get_map(self):
+        return self._map
+
+    def get_edges(self):
+        return self._edges
     
     def is_running(self):
         self._is_running = self._game.is_running()
