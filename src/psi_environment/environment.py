@@ -6,21 +6,40 @@ from collections import deque
 
 from psi_environment.game.game import Game
 
-def get_map() -> np.ndarray:
+
+def get_map(filename="./game/resources/sample_map.txt") -> np.ndarray:
     """
-    Generates adjacency matrix of a simple static map
+    Generates adjacency matrix of a sample map saved in ./game/resources/sample.map.txt
     :return: adjacency matrix of the map as a numpy array
     """
-    adjacency_matrix = np.array([
-        [0, 1, 0, 0, 1, 0, 0, 0],
-        [1, 0, 1, 0, 0, 1, 0, 0],
-        [0, 1, 0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 1, 0, 0],
-        [0, 1, 0, 0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0, 1, 0, 1],
-        [0, 0, 0, 1, 0, 0, 1, 0],
-    ])
+    with open(filename) as f:
+        content = f.read()
+
+    content = content.split()
+    connecting_characters = {"=", "x"}
+    content = np.array([[*row] for row in content])
+
+    node_indices = {}
+    index = 0
+    for y in range(content.shape[0]):
+        for x in range(content.shape[1]):
+            if content[y][x] in connecting_characters:
+                node_indices[(x, y)] = index
+                index += 1
+
+    n_nodes = len(node_indices)
+
+    adjacency_matrix = np.full((n_nodes, n_nodes), np.nan)
+
+    moves = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
+
+    for (x, y), node_index in node_indices.items():
+        for dx, dy in moves:
+            nx, ny = x + dx, y + dy
+            if (nx, ny) in node_indices and content[ny][nx] in connecting_characters:
+                neighbor_index = node_indices[(nx, ny)]
+                adjacency_matrix[node_index, neighbor_index] = 1
+
     return adjacency_matrix
 
 
@@ -59,8 +78,8 @@ class Environment:
         Returns timestep of the environment
         :return: timestep of the environment
         """
-        return self._game.get_timestep()      
-     
+        return self._game.get_timestep()
+
     def reset(self):
         """
         Resets environment to the initial state
@@ -80,6 +99,7 @@ class Environment:
         self._is_running = self._game.is_running()
         return self._is_running
 
+
 class DummyAgent:
     def __init__(self, parent_env: Environment, position: tuple[int, int], random_seed: int):
         """
@@ -93,4 +113,3 @@ class DummyAgent:
 
     def get_action(self) -> int:
         return (self._random_seed + self._parent_env.get_timestep()) % 3
-
