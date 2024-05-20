@@ -11,6 +11,10 @@ class Game:
         self._screen = pygame.display.set_mode((1280, 768))
         self._clock = pygame.time.Clock()
         self._running = True
+        self.road_vert = pygame.image.load('src/psi_environment/game/resources/road_vertical.png') # both road tiles to be finished and scaled properly
+        self.road_hori = pygame.image.load('src/psi_environment/game/resources/road_horizontal.png')
+        # no crossroad tile yet
+        
 
     def __del__(self):
         pygame.quit()
@@ -46,11 +50,13 @@ class Game:
                 elif x == '=':
                     surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
                     surface.fill('grey') # zamiana na droga pozioma 32x32 pixel art
-                    self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE]) 
+                    self.road_hori = pygame.transform.scale(self.road_hori, (TILE_SIZE, TILE_SIZE))
+                    self._screen.blit(self.road_hori ,[idx*TILE_SIZE, idy*TILE_SIZE]) 
                 elif x == '|':
                     surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-                    surface.fill('green') # zamiana na droga pionowa 32x32 pixel art
-                    self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE]) 
+                    self.road_vert = pygame.transform.scale(self.road_vert, (TILE_SIZE, TILE_SIZE))
+                    #surface.fill('green') # zamiana na droga pionowa 32x32 pixel art
+                    self._screen.blit(self.road_vert ,[idx*TILE_SIZE, idy*TILE_SIZE]) 
                 
 
 
