@@ -11,8 +11,9 @@ class Game:
         self._screen = pygame.display.set_mode((1280, 768))
         self._clock = pygame.time.Clock()
         self._running = True
-        self.road_vert = pygame.image.load('src/psi_environment/game/resources/road_vertical.png') # both road tiles to be finished and scaled properly
-        self.road_hori = pygame.image.load('src/psi_environment/game/resources/road_horizontal.png')
+        self.road_vert = pygame.image.load('src/psi_environment/game/resources/road_vertical1.png') # both road tiles to be finished and scaled properly
+        self.road_hori = pygame.image.load('src/psi_environment/game/resources/road_horizontal1.png')
+        self.crossroad = pygame.image.load('src/psi_environment/game/resources/crossroad1.png')
         # no crossroad tile yet
         
 
@@ -45,8 +46,9 @@ class Game:
             for idx, x in enumerate(y):    
                 if x == 'x':
                     surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-                    surface.fill('red') # zamiana na skrzyżowania 32x32 pixel art
-                    self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE])
+                    surface.fill('grey') # zamiana na droga pozioma 32x32 pixel art
+                    self.crossroad = pygame.transform.scale(self.crossroad, (TILE_SIZE, TILE_SIZE))
+                    self._screen.blit(self.crossroad ,[idx*TILE_SIZE, idy*TILE_SIZE]) 
                 elif x == '=':
                     surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
                     surface.fill('grey') # zamiana na droga pozioma 32x32 pixel art
