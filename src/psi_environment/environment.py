@@ -7,20 +7,22 @@ from collections import deque
 
 from psi_environment.game.game import Game
 
+    
+def get_map(filename="sample_map.txt"):
+    with importlib.resources.open_text('psi_environment.game.resources', filename) as f:
+        content = f.read()
+    content = content.split()
+    content = np.array([[*row] for row in content])
+    return content
 
 
-def get_map(filename="sample_map.txt") -> np.ndarray:
+def get_adjacency_matrix() -> np.ndarray:
     """
     Generates adjacency matrix of a sample map saved in ./game/resources/sample.map.txt
     :return: adjacency matrix of the map as a numpy array
     """
-    with importlib.resources.open_text('psi_environment.game.resources', filename) as f:
-        content = f.read()
-
-    content = content.split()
+    content = get_map()
     connecting_characters = {"=", "x"}
-    content = np.array([[*row] for row in content])
-
     node_indices = {}
     index = 0
     for y in range(content.shape[0]):
