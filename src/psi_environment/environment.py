@@ -2,17 +2,19 @@ import random
 from typing import Any
 
 import numpy as np
+import importlib.resources
 from collections import deque
 
 from psi_environment.game.game import Game
 
 
-def get_map(filename="./game/resources/sample_map.txt") -> np.ndarray:
+
+def get_map(filename="sample_map.txt") -> np.ndarray:
     """
     Generates adjacency matrix of a sample map saved in ./game/resources/sample.map.txt
     :return: adjacency matrix of the map as a numpy array
     """
-    with open(filename) as f:
+    with importlib.resources.open_text('psi_environment.game.resources', filename) as f:
         content = f.read()
 
     content = content.split()
@@ -41,7 +43,6 @@ def get_map(filename="./game/resources/sample_map.txt") -> np.ndarray:
                 adjacency_matrix[node_index, neighbor_index] = 1
 
     return adjacency_matrix
-
 
 class Environment:
     def __init__(self, random_seed: int = None):
