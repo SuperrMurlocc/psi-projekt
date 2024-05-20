@@ -8,7 +8,7 @@ class Game:
         self._crossroads = crossroads
         pygame.init()
         pygame.display.set_caption("Traffic simulation")
-        self._screen = pygame.display.set_mode((1280, 720))
+        self._screen = pygame.display.set_mode((1280, 768))
         self._clock = pygame.time.Clock()
         self._running = True
 
@@ -41,11 +41,15 @@ class Game:
             for idx, x in enumerate(y):    
                 if x == 'x':
                     surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-                    surface.fill('red')
+                    surface.fill('red') # zamiana na skrzyżowania 32x32 pixel art
                     self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE])
                 elif x == '=':
                     surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-                    surface.fill('grey')
+                    surface.fill('grey') # zamiana na droga pozioma 32x32 pixel art
+                    self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE]) 
+                elif x == '|':
+                    surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+                    surface.fill('green') # zamiana na droga pionowa 32x32 pixel art
                     self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE]) 
                 
 
