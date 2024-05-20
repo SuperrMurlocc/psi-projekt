@@ -31,10 +31,26 @@ class Game:
             if event.type == pygame.QUIT:
                 self._running = False
 
-        self._screen.fill("white")
-        # RENDER ALL GAME ELEMENTS HERE
+        
+        TILE_SIZE = 32
+        
+        self._screen.fill("black")
+        
+        # RENDER MAP FROM FILE
+        for idy, y in enumerate(self._crossroads):
+            for idx, x in enumerate(y):    
+                if x == 'x':
+                    surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+                    surface.fill('red')
+                    self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE])
+                elif x == '=':
+                    surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+                    surface.fill('grey')
+                    self._screen.blit(surface, [idx*TILE_SIZE, idy*TILE_SIZE]) 
+                
 
-        #
+
+        pygame.display.update()
         pygame.display.flip()
 
         self._clock.tick(60) 
