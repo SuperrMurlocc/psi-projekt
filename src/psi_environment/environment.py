@@ -5,7 +5,6 @@ from psi_environment.game.game import Game
 from psi_environment.data.map import Map
 from psi_environment.api.environment_api import EnvironmentAPI
 
-
 class Environment:
     def __init__(self, random_seed: int = None):
         if random_seed is None:
