@@ -1,20 +1,27 @@
 from collections import deque
-
+import importlib
 import numpy as np
 
-
-def get_map(filename="./game/resources/sample_map.txt") -> np.ndarray:
+def get_map(filename="sample_map.txt") -> np.ndarray:
     """
-    Generates adjacency matrix of a sample map saved in ./game/resources/sample.map.txt
-    :return: adjacency matrix of the map as a numpy array
+    Generates array map of a sample map saved in ./game/resources/sample.map.txt
+    :return: map as a numpy array
     """
-    with open(filename) as f:
+    
+    with importlib.resources.open_text('psi_environment.game.resources', filename) as f:
         content = f.read()
 
-    content = content.split()
-    connecting_characters = {"=", "x"}
-    content = np.array([[*row] for row in content])
+    map_array = content.split()
+    map_array = np.array([[*row] for row in map_array])
+    return map_array
 
+def create_adjacency_matrix(content) -> np.ndarray:
+    """
+    Generates adjacency matrix of a sample map from map numpy array
+    :return: adjacency matrix of the map as a numpy array
+    """
+
+    connecting_characters = {"=", "x"}
     node_indices = {}
     index = 0
     for y in range(content.shape[0]):
@@ -41,7 +48,8 @@ def get_map(filename="./game/resources/sample_map.txt") -> np.ndarray:
 
 class Map:
     def __init__(self):
-        self._adjacency_matrix = get_map()
+        self._map_array = get_map()
+        self._adjacency_matrix = create_adjacency_matrix(self._map_array)
         self._edges = {}
         for y in range(self._adjacency_matrix.shape[0]):
             for x in range(y, self._adjacency_matrix.shape[1]):
@@ -54,6 +62,9 @@ class Map:
 
     def get_adjacency_matrix(self):
         return self._adjacency_matrix
+    
+    def get_map_array(self):
+        return self._map_array
 
     def get_edges(self):
         return self._edges

@@ -11,8 +11,9 @@ class Environment:
             random_seed = random.randint(0, 2137)
         self._random_seed = random_seed
         self._map = Map()
+        self._map_array = self._map.get_map_array()
         self.data = EnvironmentAPI(self._map)
-        self._game = Game(self._map, random_seed=random_seed)
+        self._game = Game(self._map_array, random_seed=random_seed)
         self._is_running = True
 
     def step(self, action: int) -> tuple[Any, float, bool]:
