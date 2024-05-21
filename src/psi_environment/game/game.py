@@ -1,4 +1,5 @@
 from typing import Any
+import random
 import pygame
 
 class Game:
@@ -14,6 +15,7 @@ class Game:
         self.road_vert = pygame.image.load('src/psi_environment/game/resources/road_vertical1.png') # both road tiles to be finished and scaled properly
         self.road_hori = pygame.image.load('src/psi_environment/game/resources/road_horizontal1.png')
         self.crossroad = pygame.image.load('src/psi_environment/game/resources/crossroad1.png')
+        self.grass = pygame.image.load('src/psi_environment/game/resources/grass.png')
         # no crossroad tile yet
         
 
@@ -40,25 +42,22 @@ class Game:
         TILE_SIZE = 32
         
         self._screen.fill("black")
-        
         # RENDER MAP FROM FILE
         for idy, y in enumerate(self._crossroads):
             for idx, x in enumerate(y):    
                 if x == 'x':
-                    surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-                    surface.fill('grey') # zamiana na droga pozioma 32x32 pixel art
                     self.crossroad = pygame.transform.scale(self.crossroad, (TILE_SIZE, TILE_SIZE))
                     self._screen.blit(self.crossroad ,[idx*TILE_SIZE, idy*TILE_SIZE]) 
                 elif x == '=':
-                    surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-                    surface.fill('grey') # zamiana na droga pozioma 32x32 pixel art
                     self.road_hori = pygame.transform.scale(self.road_hori, (TILE_SIZE, TILE_SIZE))
                     self._screen.blit(self.road_hori ,[idx*TILE_SIZE, idy*TILE_SIZE]) 
                 elif x == '|':
-                    surface = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
                     self.road_vert = pygame.transform.scale(self.road_vert, (TILE_SIZE, TILE_SIZE))
-                    #surface.fill('green') # zamiana na droga pionowa 32x32 pixel art
                     self._screen.blit(self.road_vert ,[idx*TILE_SIZE, idy*TILE_SIZE]) 
+                elif x == '#':
+                    self.grass = pygame.transform.rotate(self.grass, 90)
+                    self.grass = pygame.transform.scale(self.grass, (TILE_SIZE, TILE_SIZE))
+                    self._screen.blit(self.grass ,[idx*TILE_SIZE, idy*TILE_SIZE])
                 
 
 
