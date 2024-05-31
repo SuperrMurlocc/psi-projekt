@@ -2,18 +2,20 @@ from collections import deque
 import importlib
 import numpy as np
 
+
 def get_map(filename="sample_map.txt") -> np.ndarray:
     """
     Generates array map of a sample map saved in ./game/resources/sample.map.txt
     :return: map as a numpy array
     """
-    
-    with importlib.resources.open_text('psi_environment.game.resources', filename) as f:
+
+    with importlib.resources.open_text("psi_environment.game.resources", filename) as f:
         content = f.read()
 
     map_array = content.split()
     map_array = np.array([[*row] for row in map_array])
     return map_array
+
 
 def create_adjacency_matrix(content) -> np.ndarray:
     """
@@ -21,12 +23,15 @@ def create_adjacency_matrix(content) -> np.ndarray:
     :return: adjacency matrix of the map as a numpy array
     """
 
-    connecting_characters = {"=", "x"}
+    node_character = "x"
+    connecting_characters = {"=", "|"}
+    empty_character = "#"
+
     node_indices = {}
     index = 0
     for y in range(content.shape[0]):
         for x in range(content.shape[1]):
-            if content[y][x] in connecting_characters:
+            if content[y][x] == node_character:
                 node_indices[(x, y)] = index
                 index += 1
 
@@ -34,14 +39,26 @@ def create_adjacency_matrix(content) -> np.ndarray:
 
     adjacency_matrix = np.full((n_nodes, n_nodes), np.nan)
 
-    moves = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
+    directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
 
     for (x, y), node_index in node_indices.items():
-        for dx, dy in moves:
-            nx, ny = x + dx, y + dy
-            if (nx, ny) in node_indices and content[ny][nx] in connecting_characters:
+        for dx, dy in directions:
+            route_length = 1
+            while True:
+                # try to find next node in a given direction
+                nx = x + route_length * dx
+                ny = y + route_length * dy
+                if nx < 0 or ny < 0 or nx >= content.shape[1] or ny >= content.shape[0]:
+                    break
+                if content[ny][nx] in {node_character, empty_character}:
+                    break
+                route_length += 1
+
+            # if we found a node
+            if (nx, ny) in node_indices and content[ny][nx] == node_character:
                 neighbor_index = node_indices[(nx, ny)]
-                adjacency_matrix[node_index, neighbor_index] = 1
+                # subtract 1 because we don't count the node itself
+                adjacency_matrix[node_index, neighbor_index] = route_length - 1
 
     return adjacency_matrix
 
@@ -62,7 +79,7 @@ class Map:
 
     def get_adjacency_matrix(self):
         return self._adjacency_matrix
-    
+
     def get_map_array(self):
         return self._map_array
 
