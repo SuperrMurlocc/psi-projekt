@@ -38,9 +38,9 @@ class EnvironmentAPI:
         if 0 > from_node > size and 0 > to_node > size:
             raise ValueError("Incorrect values of from_node and to_node")
 
-        edges = self._map.get_edges()
+        roads = self._map.get_roads()
 
-        if (from_node, to_node) not in edges.keys():
+        if (from_node, to_node) not in roads.keys():
             return np.nan
 
-        return len(edges[(from_node, to_node)])
+        return np.count_nonzero(roads[(from_node, to_node)])
