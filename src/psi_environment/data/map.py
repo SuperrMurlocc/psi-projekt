@@ -76,14 +76,14 @@ def create_adjacency_matrix(content, node_indices) -> np.ndarray:
 class Road:
     def __init__(
         self,
-        length: int,
+        length_on_map: int,
         front_node: int,
         back_node: int,
         adjacent_nodes: set,
         cars_per_length: int = 2,
     ):
-        self.length = length
-        self._road = np.zeros((length * cars_per_length,))
+        self.length = length_on_map * cars_per_length
+        self._road = np.zeros((self.length,))
         self._front_node = front_node
         self._back_node = back_node
         self._adjacent_nodes = adjacent_nodes
@@ -116,9 +116,9 @@ class Map:
         for back_node, front_node in self._edges:
             adjacent_edges = [edge for edge in self._edges if edge[0] == front_node]
             adjacent_nodes = {edge[1] for edge in adjacent_edges} - {back_node}
-            road_length = int(self._adjacency_matrix[back_node, front_node])
+            length_on_map = int(self._adjacency_matrix[back_node, front_node])
             self._roads[(back_node, front_node)] = Road(
-                length=road_length,
+                length_on_map=length_on_map,
                 front_node=front_node,
                 back_node=back_node,
                 adjacent_nodes=adjacent_nodes,
