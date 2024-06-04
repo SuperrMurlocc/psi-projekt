@@ -2,6 +2,12 @@ from collections import deque
 import importlib
 import numpy as np
 
+NODE_CHARACTER = "x"
+EMPTY_CHARACTER = "#"
+H_ROAD_CHARACTER = "="
+V_ROAD_CHARACTER = "|"
+ROAD_CHARACTERS = {H_ROAD_CHARACTER, V_ROAD_CHARACTER}
+
 
 def get_map(filename="sample_map.txt") -> np.ndarray:
     """
@@ -17,23 +23,27 @@ def get_map(filename="sample_map.txt") -> np.ndarray:
     return map_array
 
 
-def create_adjacency_matrix(content) -> np.ndarray:
+def get_node_indices(map_array) -> dict:
+    """
+    Finds node indices of a sample map
+    :return: node indices of the map as a dictionary
+    """
+
+    node_indices = {}
+    index = 0
+    for y in range(map_array.shape[0]):
+        for x in range(map_array.shape[1]):
+            if map_array[y][x] == NODE_CHARACTER:
+                node_indices[(x, y)] = index
+                index += 1
+    return node_indices
+
+
+def create_adjacency_matrix(content, node_indices) -> np.ndarray:
     """
     Generates adjacency matrix of a sample map from map numpy array
     :return: adjacency matrix of the map as a numpy array
     """
-
-    node_character = "x"
-    connecting_characters = {"=", "|"}
-    empty_character = "#"
-
-    node_indices = {}
-    index = 0
-    for y in range(content.shape[0]):
-        for x in range(content.shape[1]):
-            if content[y][x] == node_character:
-                node_indices[(x, y)] = index
-                index += 1
 
     n_nodes = len(node_indices)
 
@@ -50,12 +60,12 @@ def create_adjacency_matrix(content) -> np.ndarray:
                 ny = y + route_length * dy
                 if nx < 0 or ny < 0 or nx >= content.shape[1] or ny >= content.shape[0]:
                     break
-                if content[ny][nx] in {node_character, empty_character}:
+                if content[ny][nx] in {NODE_CHARACTER, EMPTY_CHARACTER}:
                     break
                 route_length += 1
 
             # if we found a node
-            if (nx, ny) in node_indices and content[ny][nx] == node_character:
+            if (nx, ny) in node_indices and content[ny][nx] == NODE_CHARACTER:
                 neighbor_index = node_indices[(nx, ny)]
                 # subtract 1 because we don't count the node itself
                 adjacency_matrix[node_index, neighbor_index] = route_length - 1
@@ -63,16 +73,56 @@ def create_adjacency_matrix(content) -> np.ndarray:
     return adjacency_matrix
 
 
+class Road:
+    def __init__(
+        self,
+        length_on_map: int,
+        front_node: int,
+        back_node: int,
+        adjacent_nodes: set,
+        cars_per_length: int = 2,
+    ):
+        self.length = length_on_map * cars_per_length
+        self._road = np.zeros((self.length,))
+        self._front_node = front_node
+        self._back_node = back_node
+        self._adjacent_nodes = adjacent_nodes
+
+    def get_road(self):
+        return self._road
+
+    def get_length(self):
+        return self.length
+
+    def __repr__(self) -> str:
+        return repr(self._road)
+
+
 class Map:
     def __init__(self):
         self._map_array = get_map()
-        self._adjacency_matrix = create_adjacency_matrix(self._map_array)
-        self._edges = {}
-        for y in range(self._adjacency_matrix.shape[0]):
-            for x in range(y, self._adjacency_matrix.shape[1]):
-                if self._adjacency_matrix[y, x] != np.nan:
-                    self._edges[(y, x)] = deque()
-                    self._edges[(x, y)] = deque()
+        self._node_indices = get_node_indices(self._map_array)
+        self._adjacency_matrix = create_adjacency_matrix(
+            self._map_array, self._node_indices
+        )
+
+        self._edges = []
+        for x_node in self._node_indices.values():
+            for y_node in self._node_indices.values():
+                if not np.isnan(self._adjacency_matrix[x_node, y_node]):
+                    self._edges.append((x_node, y_node))
+
+        self._roads = {}
+        for back_node, front_node in self._edges:
+            adjacent_edges = [edge for edge in self._edges if edge[0] == front_node]
+            adjacent_nodes = {edge[1] for edge in adjacent_edges} - {back_node}
+            length_on_map = int(self._adjacency_matrix[back_node, front_node])
+            self._roads[(back_node, front_node)] = Road(
+                length_on_map=length_on_map,
+                front_node=front_node,
+                back_node=back_node,
+                adjacent_nodes=adjacent_nodes,
+            )
 
     def get_adjacency_matrix_size(self):
         return self._adjacency_matrix.shape[0]
@@ -83,5 +133,5 @@ class Map:
     def get_map_array(self):
         return self._map_array
 
-    def get_edges(self):
-        return self._edges
+    def get_roads(self):
+        return self._roads
