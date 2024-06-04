@@ -23,7 +23,7 @@ def get_map(filename="sample_map.txt") -> np.ndarray:
     return map_array
 
 
-def get_node_indicies(map_array) -> dict:
+def get_node_indices(map_array) -> dict:
     """
     Finds node indices of a sample map
     :return: node indices of the map as a dictionary
@@ -101,7 +101,7 @@ class Road:
 class Map:
     def __init__(self):
         self._map_array = get_map()
-        self._node_indices = get_node_indicies(self._map_array)
+        self._node_indices = get_node_indices(self._map_array)
         self._adjacency_matrix = create_adjacency_matrix(
             self._map_array, self._node_indices
         )
