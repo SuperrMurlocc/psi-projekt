@@ -2,11 +2,13 @@ from collections import deque
 import importlib
 import numpy as np
 
+
 NODE_CHARACTER = "x"
 EMPTY_CHARACTER = "#"
 H_ROAD_CHARACTER = "="
 V_ROAD_CHARACTER = "|"
 ROAD_CHARACTERS = {H_ROAD_CHARACTER, V_ROAD_CHARACTER}
+N_BOTS = 3
 
 
 def get_map(filename="sample_map.txt") -> np.ndarray:
@@ -99,7 +101,7 @@ class Road:
 
 
 class Map:
-    def __init__(self):
+    def __init__(self, random_seed):
         self._map_array = get_map()
         self._node_indices = get_node_indices(self._map_array)
         self._adjacency_matrix = create_adjacency_matrix(
@@ -123,6 +125,23 @@ class Map:
                 back_node=back_node,
                 adjacent_nodes=adjacent_nodes,
             )
+
+        from psi_environment.environment import DummyAgent
+
+        self._dummies = []
+
+        self._random_seed = random_seed
+        np.random.seed(self._random_seed)
+
+        roads_idxs = np.random.choice(len(self._roads), size=N_BOTS)
+        roads = [list(self._roads.keys())[idx] for idx in roads_idxs]
+
+        for i, road_key in enumerate(roads):
+            road = self._roads[road_key]
+            pos_idx = np.random.randint(road.length)
+            car = DummyAgent((road, pos_idx), self._random_seed, i + 1)
+            self._dummies.append(car)
+            road.get_road()[pos_idx] = car.get_car_id()
 
     def get_adjacency_matrix_size(self):
         return self._adjacency_matrix.shape[0]
