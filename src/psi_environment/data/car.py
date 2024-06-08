@@ -53,6 +53,6 @@ class DummyAgent(Car):
         self._random_seed = random_seed
         self._step = 0
 
-    def get_action(self, map_state: MapState) -> int:
+    def get_action(self, map_state: MapState) -> Action:
         self._step += 1
-        return self._random_seed + self._car_id + self._step % 4
+        return (self._random_seed + self._car_id + self._step) % 4 + 1
