@@ -40,6 +40,33 @@ class Road:
     def __repr__(self) -> str:
         return repr(self._road)
 
+    def __getitem__(self, idx: int):
+        return self._road[idx]
+
+    def __setitem__(self, idx, value):
+        self._road[idx] = value
+
+    def __delitem__(self, idx: int):
+        self._road[idx] = 0
+
+    def get_left_road_key(self):
+        if self._left_node:
+            return self._front_node, self._left_node
+        return None
+
+    def get_right_road_key(self):
+        if self._right_node:
+            return self._front_node, self._right_node
+        return None
+
+    def get_forward_road_key(self):
+        if self._forward_node:
+            return self._front_node, self._forward_node
+        return None
+
+    def get_backward_road_key(self):
+        return self._front_node, self._back_node
+
 
 class Direction(IntEnum):
     UP = 0
@@ -193,3 +220,6 @@ class MapState:
 
     def get_roads(self):
         return self._roads
+
+    def get_road(self, key):
+        return self._roads[key]
