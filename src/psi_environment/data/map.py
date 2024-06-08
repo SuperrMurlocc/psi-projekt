@@ -2,6 +2,7 @@ import numpy as np
 
 from psi_environment.data.car import Car, DummyAgent
 from psi_environment.data.map_state import MapState
+from psi_environment.data.car import Action
 
 
 class Map:
@@ -28,7 +29,39 @@ class Map:
         actions.sort(key=lambda x: x[1])
 
         for car, action in actions:
-            pass  # TODO implement moving cars per action
+            current_road = self._map_state.get_roads()[car.road_key]
+            if action == Action.BACK:
+                inv_road_key = current_road.get_backward_road_key()
+                next_road = self._map_state.get_road(inv_road_key)
+                inv_pos = current_road.get_length() - 1 - car.road_pos
+                if next_road[inv_pos] == 0:
+                    next_road[inv_pos] = car.get_car_id()
+                    current_road[car.road_pos] = 0
+                    car.road_pos = inv_pos
+                    car.road_key = inv_road_key
+            else:
+                if current_road[-1] != car.get_car_id():
+                    if action == Action.FORWARD:
+                        next_pos = car.road_pos + 1
+                        if current_road[next_pos] == 0:
+                            current_road[car.road_pos] = 0
+                            current_road[next_pos] = car.get_car_id()
+                            car.road_pos = next_pos
+                else:
+                    next_road_key = None
+                    if action == Action.LEFT:
+                        next_road_key = current_road.get_left_road_key()
+                    elif action == Action.RIGHT:
+                        next_road_key = current_road.get_right_road_key()
+                    elif action == Action.FORWARD:
+                        next_road_key = current_road.get_forward_road_key()
+                    next_road = self._map_state.get_road(next_road_key) if next_road_key else None
+                    if next_road and next_road[0] == 0:
+                        next_pos = 0
+                        current_road[car.road_pos] = 0
+                        next_road[next_pos] = car.get_car_id()
+                        car.road_pos = next_pos
+                        car.road_key = next_road_key
 
     def get_map_state(self) -> MapState:
         return self._map_state
