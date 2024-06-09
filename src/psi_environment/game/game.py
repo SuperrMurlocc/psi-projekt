@@ -99,10 +99,11 @@ class Game:
                     )
                     text_surface = my_font.render(f"{count}", False, (255, 255, 255))
                     count += 1
+                    self._screen.blit(
+                        self.crossroad, [idx * TILE_SIZE, idy * TILE_SIZE]
+                    )
                     self._screen.blit(text_surface, [idx * TILE_SIZE, idy * TILE_SIZE])
-                    # self._screen.blit(
-                    #     self.crossroad, [idx * TILE_SIZE, idy * TILE_SIZE]
-                    # )
+
                 elif x == "=":
                     self.road_hori = pygame.transform.scale(
                         self.road_hori, (TILE_SIZE, TILE_SIZE)
@@ -124,11 +125,8 @@ class Game:
                     )
                     self._screen.blit(self.grass, [idx * TILE_SIZE, idy * TILE_SIZE])
 
-        print("###")
         rev_dict = {v: k for k, v in self._map._map_state._node_indices.items()}
         for car in self._map._cars:
-            print(car._car_id, car.road_key, car.road_pos)
-            print(rev_dict[car.road_key[0]])
             pos = rev_dict[car.road_key[0]]
             direction = self._map._map_state._edges[car.road_key]
             x, y = pos
@@ -166,8 +164,6 @@ class Game:
                             (y + 0) * TILE_SIZE + 1 * CAR_SIZE,
                         ],
                     )
-
-        print("###")
 
         pygame.display.update()
         pygame.display.flip()
