@@ -21,20 +21,11 @@ class Car:
     def get_action(self, map_state: MapState) -> Action:
         pass
 
-    def turn_left(self):
-        pass
-
-    def turn_right(self):
-        pass
-
-    def turn_back(self):
-        pass
-
-    def go_forward(self):
-        pass
-
     def get_car_id(self):
         return self._car_id
+
+    def set_car_id(self, car_id: int):
+        self._car_id = car_id
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.road_key}, {self.road_pos}, {self._car_id})"

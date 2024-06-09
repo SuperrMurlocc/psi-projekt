@@ -68,7 +68,7 @@ class Game:
     def __del__(self):
         pygame.quit()
 
-    def step(self, action: int) -> tuple[Any, float, bool]:
+    def step(self):
         self.render()
         self.is_running()
 
