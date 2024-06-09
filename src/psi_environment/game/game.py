@@ -1,6 +1,8 @@
 from typing import Any
 import random
 import pygame
+import importlib.resources
+
 
 from psi_environment.data.map import Map
 
@@ -9,23 +11,33 @@ class Game:
     def __init__(self, map: Map, random_seed: int = None):
         self._random_seed = random_seed
         self._timestep = 0
+        self._map = map
         self._crossroads = map.get_map_state().get_map_array()
         pygame.init()
         pygame.display.set_caption("Traffic simulation")
         self._screen = pygame.display.set_mode((1280, 768))
         self._clock = pygame.time.Clock()
         self._running = True
-        self.road_vert = pygame.image.load(
-            "src/psi_environment/game/resources/road_vertical1.png"
-        )  # both road tiles to be finished and scaled properly
-        self.road_hori = pygame.image.load(
-            "src/psi_environment/game/resources/road_horizontal1.png"
-        )
-        self.crossroad = pygame.image.load(
-            "src/psi_environment/game/resources/crossroad1.png"
-        )
-        self.grass = pygame.image.load("src/psi_environment/game/resources/grass.png")
+        self._init_images()
         # no crossroad tile yet
+
+    def _init_images(self):
+        with importlib.resources.path(
+            "psi_environment.game.resources", "road_vertical1.png"
+        ) as road_vert_path:
+            self.road_vert = pygame.image.load(str(road_vert_path))
+        with importlib.resources.path(
+            "psi_environment.game.resources", "road_horizontal1.png"
+        ) as road_hori_path:
+            self.road_hori = pygame.image.load(str(road_hori_path))
+        with importlib.resources.path(
+            "psi_environment.game.resources", "crossroad1.png"
+        ) as crossroad_path:
+            self.crossroad = pygame.image.load(str(crossroad_path))
+        with importlib.resources.path(
+            "psi_environment.game.resources", "grass.png"
+        ) as grass_path:
+            self.grass = pygame.image.load(str(grass_path))
 
     def __del__(self):
         pygame.quit()
@@ -33,6 +45,10 @@ class Game:
     def step(self, action: int) -> tuple[Any, float, bool]:
         self.render()
         self.is_running()
+        print("###")
+        for car in self._map._cars:
+            print(car._car_id, car.road_key, car.road_pos)
+        print("###")
 
     def get_timestep(self) -> int:
         return self._timestep
