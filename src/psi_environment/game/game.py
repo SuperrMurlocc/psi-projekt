@@ -16,7 +16,7 @@ class Direction(IntEnum):
 
 
 class Game:
-    def __init__(self, map: Map, random_seed: int = None):
+    def __init__(self, map: Map, random_seed: int = None, ticks_per_second: int = 10):
         self._random_seed = random_seed
         self._timestep = 0
         self._map = map
@@ -25,6 +25,7 @@ class Game:
         pygame.display.set_caption("Traffic simulation")
         self._screen = pygame.display.set_mode((1280, 768))
         self._clock = pygame.time.Clock()
+        self._ticks_per_second = ticks_per_second
         self._running = True
         self._init_images()
         # no crossroad tile yet
@@ -168,7 +169,7 @@ class Game:
         pygame.display.update()
         pygame.display.flip()
 
-        self._clock.tick(10)
+        self._clock.tick(self._ticks_per_second)
 
     def is_running(self):
         return self._running

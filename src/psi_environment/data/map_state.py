@@ -37,6 +37,9 @@ class Road:
     def get_length(self):
         return self.length
 
+    def get_inverted_position(self, pos: int) -> int:
+        return self.length - 1 - pos
+
     def __repr__(self) -> str:
         return repr(self._road)
 
@@ -48,6 +51,9 @@ class Road:
 
     def __delitem__(self, idx: int):
         self._road[idx] = 0
+
+    def get_key(self):
+        return (self._back_node, self._front_node)
 
     def get_left_road_key(self):
         if self._left_node:

@@ -10,14 +10,21 @@ from psi_environment.data.car import Car
 
 
 class Environment:
-    def __init__(self, random_seed: int = None, agents: list[Car] = []):
+    def __init__(
+        self,
+        random_seed: int = None,
+        agents: list[Car] = [],
+        ticks_per_second: int = 10,
+    ):
         if random_seed is None:
             random_seed = random.randint(0, 2137)
         self._random_seed = random_seed
         np.random.seed(self._random_seed)
         self._map = Map(self._random_seed)
         self.data = EnvironmentAPI(self._map)
-        self._game = Game(self._map, random_seed=random_seed)
+        self._game = Game(
+            self._map, random_seed=random_seed, ticks_per_second=ticks_per_second
+        )
         self._is_running = True
 
     def step(self, action: int) -> tuple[Any, float, bool]:
@@ -32,7 +39,7 @@ class Environment:
         #  How will be direction handled so it will be consistent. I suggest something like a clock
         #  but it will require some extra checks of edges.
         #  And the implementation of it has not started
-
+        self._map.step()
         return self._game.step(action)
 
     def get_timestep(self) -> int:
