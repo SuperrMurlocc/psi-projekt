@@ -32,7 +32,7 @@ class Map:
                 car = agent_type(road_key, road_pos_idx, car_idx)
                 self._cars.append(car)
                 continue
-            car_idx = i
+            car_idx = DUMMY_ID_START + i
             road_pos_idx = self._map_state.add_car(road_key, car_idx)
             car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_idx)
             self._cars.append(car)
@@ -64,7 +64,6 @@ class Map:
 
             # Car is not at the end of the road
             if current_road[-1] != car.get_car_id():
-                print(current_road)
                 if action == Action.FORWARD:
                     next_pos = car.road_pos + 1
                     if current_road[next_pos] == 0:
