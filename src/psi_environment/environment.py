@@ -28,17 +28,15 @@ class Environment:
             self._map, random_seed=random_seed, ticks_per_second=ticks_per_second
         )
         self._is_running = True
-        self.cost = 0
 
     def step(self) -> tuple[int, bool]:
         self._map.step()
         self._game.step()
-        self.cost += 1
         if self._map.is_game_over():
             self._is_running = False
             print("Game over!")
-            print(f"Cost: {self.cost}")
-        return self.cost, self._is_running
+            print(f"Cost: {self.get_timestep()}")
+        return self.get_timestep(), self._is_running
 
     def get_timestep(self) -> int:
         """

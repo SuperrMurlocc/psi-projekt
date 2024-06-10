@@ -69,6 +69,7 @@ class Game:
         pygame.quit()
 
     def step(self):
+        self._timestep += 1
         self.render()
         self.is_running()
 
