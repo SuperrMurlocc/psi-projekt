@@ -1,7 +1,6 @@
 import numpy as np
 
 from psi_environment.data.map_state import MapState
-from psi_environment.data.car import Action
 
 
 class EnvironmentAPI:
