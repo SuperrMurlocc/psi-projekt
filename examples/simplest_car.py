@@ -1,7 +1,6 @@
 from psi_environment.data.car import Car, Action
 from psi_environment.data.map_state import MapState
 from psi_environment.environment import Environment
-from time import sleep
 
 
 class MyCar(Car):
@@ -11,6 +10,6 @@ class MyCar(Car):
 
 if __name__ == "__main__":
     env = Environment(2137, MyCar, ticks_per_second=1, n_bots=50)
-    while True:
-        if not env.step():
-            break
+    while env.is_running():
+        current_cost, is_running = env.step()
+        print(current_cost, is_running)

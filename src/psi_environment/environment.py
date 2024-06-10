@@ -33,10 +33,10 @@ class Environment:
         self._map.step()
         self._game.step()
         if self._map.is_game_over():
-            self._is_running = False
+            self._game.stop()
             print("Game over!")
             print(f"Cost: {self.get_timestep()}")
-        return self.get_timestep(), self._is_running
+        return self.get_timestep(), self.is_running()
 
     def get_timestep(self) -> int:
         """

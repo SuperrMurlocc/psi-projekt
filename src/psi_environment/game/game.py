@@ -79,6 +79,10 @@ class Game:
     def reset(self):
         raise NotImplementedError
 
+    def stop(self):
+        self._running = False
+        pygame.quit()
+
     def render(self):
         # Check for all events, such as QUIT. Probably not the right place for it, but it's a start. TODO - move it to more appropriate place.
         for event in pygame.event.get():
