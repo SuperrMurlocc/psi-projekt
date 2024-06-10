@@ -13,10 +13,10 @@ class Environment:
     def __init__(
         self,
         random_seed: int = None,
-        agent_type: Type[Car] = None,
+        agent_type: Type[Car] | None = None,
         ticks_per_second: int = 10,
         n_bots: int = 10,
-        n_points: int = 3
+        n_points: int = 3,
     ):
         if random_seed is None:
             random_seed = random.randint(0, 2137)
@@ -30,7 +30,7 @@ class Environment:
         self._is_running = True
         self.cost = 0
 
-    def step(self) -> bool:
+    def step(self) -> tuple[int, bool]:
         self._map.step()
         self._game.step()
         self.cost += 1
@@ -38,7 +38,7 @@ class Environment:
             self._is_running = False
             print("Game over!")
             print(f"Cost: {self.cost}")
-        return self._is_running
+        return self.cost, self._is_running
 
     def get_timestep(self) -> int:
         """

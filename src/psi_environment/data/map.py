@@ -7,11 +7,17 @@ from psi_environment.data.map_state import MapState, Road
 from psi_environment.data.car import Action
 from psi_environment.data.point import Point
 
-DUMMY_ID_START = 2
+AGENT_ID = 1
 
 
 class Map:
-    def __init__(self, random_seed: int, n_bots: int = 3, agent_type: Type[Car] = None, n_points: int = 3):
+    def __init__(
+        self,
+        random_seed: int,
+        n_bots: int = 3,
+        agent_type: Type[Car] | None = None,
+        n_points: int = 3,
+    ):
         self.n_points = n_points
         self._map_state = MapState(random_seed)
         self._points = []
@@ -26,13 +32,13 @@ class Map:
         road_keys = [list(roads)[idx] for idx in road_idxs]
 
         for i, road_key in enumerate(road_keys):
-            if i == 0:
-                car_idx = 1
+            car_idx = i + 1
+            if car_idx == AGENT_ID and agent_type is not None:
                 road_pos_idx = self._map_state.add_car(road_key, car_idx)
                 car = agent_type(road_key, road_pos_idx, car_idx)
                 self._cars.append(car)
                 continue
-            car_idx = DUMMY_ID_START + i
+
             road_pos_idx = self._map_state.add_car(road_key, car_idx)
             car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_idx)
             self._cars.append(car)
