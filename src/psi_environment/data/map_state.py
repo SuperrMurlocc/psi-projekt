@@ -15,7 +15,9 @@ class Road:
         self,
         length_on_map: int,
         front_node: int,
+        front_indicies: tuple[int, int],
         back_node: int,
+        back_indicies: tuple[int, int],
         adjacent_nodes: set,
         cars_per_length: int = 2,
         left_node: int = None,
@@ -23,9 +25,12 @@ class Road:
         forward_node: int = None,
     ):
         self.length = length_on_map * cars_per_length
+        self._cars_per_length = cars_per_length
         self._road = np.zeros((self.length,))
         self._front_node = front_node
+        self._front_indicies = front_indicies
         self._back_node = back_node
+        self._back_indicies = back_indicies
         self._adjacent_nodes = adjacent_nodes
         self._left_node = left_node
         self._right_node = right_node
@@ -72,6 +77,19 @@ class Road:
 
     def get_backward_road_key(self):
         return self._front_node, self._back_node
+    
+    def get_number_of_cars(self) -> int:
+        return np.count_nonzero(self._road)
+
+    def get_map_position(self, pos: int) -> tuple[int, int]:
+        if pos < 0 or pos >= self.length:
+            raise ValueError("Position out of range")
+        relative_pos = 1 + pos // self._cars_per_length
+        front_indices = np.array(self._front_indicies)
+        back_indices = np.array(self._back_indicies)
+        diff = back_indices - front_indices
+        diff = np.where(diff != 0, relative_pos, 0)
+        return tuple(back_indices + diff)
 
 
 class Direction(IntEnum):
@@ -98,7 +116,7 @@ def get_map(filename="sample_map.txt") -> np.ndarray:
     return map_array
 
 
-def get_node_indices(map_array) -> dict[tuple[int, int], int]:
+def get_node_indices(map_array) -> dict[int, tuple[int, int]]:
     """
     Finds node indices of a sample map
     :return: node indices of the map as a dictionary
@@ -109,24 +127,27 @@ def get_node_indices(map_array) -> dict[tuple[int, int], int]:
     for y in range(map_array.shape[0]):
         for x in range(map_array.shape[1]):
             if map_array[y][x] == NODE_CHARACTER:
-                node_indices[(x, y)] = index
+                node_indices[index] = (x, y)
                 index += 1
     return node_indices
 
 
-def create_adjacency_matrix(content, node_indices) -> np.ndarray:
+def create_adjacency_matrix(
+    content: np.ndarray, node_indices: dict[int, tuple[int, int]]
+) -> np.ndarray:
     """
     Generates adjacency matrix of a sample map from map numpy array
     :return: adjacency matrix of the map as a numpy array
     """
 
     n_nodes = len(node_indices)
+    indices_node = {v: k for k, v in node_indices.items()}
 
     adjacency_matrix = np.full((n_nodes, n_nodes), np.nan)
 
     directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
 
-    for (x, y), node_index in node_indices.items():
+    for node_index, (x, y) in node_indices.items():
         for dx, dy in directions:
             route_length = 1
             while True:
@@ -140,8 +161,8 @@ def create_adjacency_matrix(content, node_indices) -> np.ndarray:
                 route_length += 1
 
             # if we found a node
-            if (nx, ny) in node_indices and content[ny][nx] == NODE_CHARACTER:
-                neighbor_index = node_indices[(nx, ny)]
+            if (nx, ny) in indices_node and content[ny][nx] == NODE_CHARACTER:
+                neighbor_index = indices_node[(nx, ny)]
                 # subtract 1 because we don't count the node itself
                 adjacency_matrix[node_index, neighbor_index] = route_length - 1
 
@@ -158,8 +179,8 @@ class MapState:
         )
 
         self._edges: dict[tuple[int, int], Direction] = {}
-        for (x_x, x_y), x_index in self._node_indices.items():
-            for (y_x, y_y), y_index in self._node_indices.items():
+        for x_index, (x_x, x_y) in self._node_indices.items():
+            for y_index, (y_x, y_y) in self._node_indices.items():
                 if not np.isnan(self._adjacency_matrix[x_index, y_index]):
                     x_pos = np.array([x_x, x_y])
                     y_pos = np.array([y_x, y_y])
@@ -202,7 +223,9 @@ class MapState:
             self._roads[(back_node, front_node)] = Road(
                 length_on_map=length_on_map,
                 front_node=front_node,
+                front_indicies=self._node_indices[front_node],
                 back_node=back_node,
+                back_indicies=self._node_indices[back_node],
                 adjacent_nodes=adjacent_nodes,
                 left_node=left_node,
                 right_node=right_node,
@@ -227,5 +250,11 @@ class MapState:
     def get_roads(self):
         return self._roads
 
-    def get_road(self, key):
+    def get_road(self, key: tuple[int, int]):
         return self._roads[key]
+
+    def get_node_map_position(self, node_index: int):
+        return self._node_indices[node_index]
+
+    def get_road_position_map_position(self, road_key: tuple[int, int], road_pos: int):
+        return self._roads[road_key].get_map_position(road_pos)

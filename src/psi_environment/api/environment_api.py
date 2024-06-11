@@ -44,7 +44,7 @@ class EnvironmentAPI:
         if (from_node, to_node) not in roads.keys():
             return np.nan
 
-        return np.count_nonzero(roads[(from_node, to_node)])
+        return roads[(from_node, to_node)].get_number_of_cars()
 
     def get_points_position(self) -> dict[tuple[int, int], Road]:
         """
