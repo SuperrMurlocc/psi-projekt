@@ -1,14 +1,10 @@
-from enum import IntEnum
 from abc import abstractmethod
 
+import numpy as np
+
 from psi_environment.data.map_state import MapState
-
-
-class Action(IntEnum):
-    RIGHT = 1
-    FORWARD = 2
-    LEFT = 3
-    BACK = 4
+from psi_environment.api.environment_api import EnvironmentAPI
+from psi_environment.data.action import Action
 
 
 class Car:
@@ -43,4 +39,13 @@ class DummyAgent(Car):
 
     def get_action(self, map_state: MapState) -> Action:
         self._step += 1
-        return (self._random_seed + self._car_id + self._step) % 4 + 1
+
+        seed = (self._random_seed * self._car_id) % 10_000 + self._step
+        rng = np.random.default_rng(seed)
+
+        api = EnvironmentAPI(map_state)
+
+        if api.is_position_road_end(self.road_key, self.road_pos):
+            return rng.integers(1, 4)
+
+        return rng.choice([Action.FORWARD, Action.BACK], p=[0.95, 0.05])

@@ -1,4 +1,5 @@
-from psi_environment.data.car import Car, Action
+from psi_environment.data.car import Car
+from psi_environment.data.action import Action
 from psi_environment.data.map_state import MapState
 from psi_environment.environment import Environment
 

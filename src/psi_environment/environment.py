@@ -5,7 +5,6 @@ import numpy as np
 
 from psi_environment.game.game import Game
 from psi_environment.data.map import Map
-from psi_environment.api.environment_api import EnvironmentAPI
 from psi_environment.data.car import Car
 
 
@@ -23,7 +22,6 @@ class Environment:
         self._random_seed = random_seed
         np.random.seed(self._random_seed)
         self._map = Map(self._random_seed, n_bots, agent_type, n_points)
-        self.data = EnvironmentAPI(self._map)
         self._game = Game(
             self._map, random_seed=random_seed, ticks_per_second=ticks_per_second
         )
