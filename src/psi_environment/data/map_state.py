@@ -77,7 +77,7 @@ class Road:
 
     def get_backward_road_key(self):
         return self._front_node, self._back_node
-    
+
     def get_number_of_cars(self) -> int:
         return np.count_nonzero(self._road)
 
@@ -237,6 +237,31 @@ class MapState:
         pos_idx = np.random.randint(road.length)
         road.get_road()[pos_idx] = car_id
         return pos_idx
+
+    def add_cars(self, n: int) -> list[tuple[int, tuple[int, int], int]]:
+        # TODO: breaks if number of cars is greater than number of roads
+        if n > len(self._roads):
+            raise ValueError("Number of cars is greater than number of roads")
+
+        road_idxs = np.random.choice(len(self._roads), size=n)
+        road_keys = [list(self._roads)[idx] for idx in road_idxs]
+
+        cars_data = []
+
+        for i, road_key in enumerate(road_keys):
+            car_idx = i + 1
+            road_pos_idx = self.add_car(road_key, car_idx)
+            cars_data.append((car_idx, road_key, road_pos_idx))
+
+        return cars_data
+
+    def get_road_tiles_map_positions(self) -> list[tuple[int, int]]:
+        road_tiles = []
+        for y in range(self._map_array.shape[0]):
+            for x in range(self._map_array.shape[1]):
+                if self._map_array[y][x] in ROAD_CHARACTERS:
+                    road_tiles.append((x, y))
+        return road_tiles
 
     def get_adjacency_matrix_size(self):
         return self._adjacency_matrix.shape[0]

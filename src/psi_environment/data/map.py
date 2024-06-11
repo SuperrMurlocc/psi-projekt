@@ -20,37 +20,37 @@ class Map:
     ):
         self.n_points = n_points
         self._map_state = MapState(random_seed)
-        self._points = []
+        self._points: list[Point] = []
 
         self._cars: list[Car] = []
+        self._agent_car = None
 
         self._random_seed = random_seed
 
-        # TODO: breaks if number of cars is greater than number of roads
-        roads = self._map_state.get_roads()
-        road_idxs = np.random.choice(len(roads), size=n_bots + 1)
-        road_keys = [list(roads)[idx] for idx in road_idxs]
+        cars_data = self._map_state.add_cars(n_bots + 1)
 
-        for i, road_key in enumerate(road_keys):
-            car_idx = i + 1
-            if car_idx == AGENT_ID and agent_type is not None:
-                road_pos_idx = self._map_state.add_car(road_key, car_idx)
-                car = agent_type(road_key, road_pos_idx, car_idx)
+        for car_id, road_key, road_pos_idx in cars_data:
+            if car_id == AGENT_ID and agent_type is not None:
+                car = agent_type(road_key, road_pos_idx, car_id)
+                self._agent_car = car
                 self._cars.append(car)
                 continue
 
-            road_pos_idx = self._map_state.add_car(road_key, car_idx)
-            car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_idx)
+            car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_id)
             self._cars.append(car)
 
-        road_idxs = np.random.choice(len(roads), size=n_bots)
-        road_keys = [list(roads)[idx] for idx in road_idxs]
+        road_tile_positions = self._map_state.get_road_tiles_map_positions()
+        if self._agent_car is not None:
+            car_position = self._map_state.get_road_position_map_position(
+                self._agent_car.road_key, self._agent_car.road_pos
+            )
+            road_tile_positions.remove(car_position)
+        road_tile_idxs = np.random.choice(len(road_tile_positions), size=n_points)
 
-        for i, road_key in enumerate(road_keys):
-            point_idx = i + 1
-            road = roads[road_key]
-            pos_idx = np.random.randint(road.length)
-            point = Point(road_key, pos_idx, point_idx)
+        for i, road_tile_idx in enumerate(road_tile_idxs):
+            point_id = i + 1
+            point_position = road_tile_positions[road_tile_idx]
+            point = Point(point_position, point_id)
             self._points.append(point)
 
     def step(self):
@@ -97,12 +97,15 @@ class Map:
         road[road_pos] = car.get_car_id()
         car.road_pos = road_pos
         car.road_key = road.get_key()
-        if car.get_car_id() == 1:
+        if car == self._agent_car:
             self._update_collected_points(car)
 
     def _update_collected_points(self, car: Car):
         for i, point in enumerate(self._points):
-            if point.road_key == car.road_key and point.road_pos == car.road_pos:
+            car_map_position = self._map_state.get_road_position_map_position(
+                car.road_key, car.road_pos
+            )
+            if point.map_position == car_map_position:
                 self._points.pop(i)
                 break
 

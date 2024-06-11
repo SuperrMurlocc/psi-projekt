@@ -9,7 +9,13 @@ class MyCar(Car):
 
 
 if __name__ == "__main__":
-    env = Environment(2137, MyCar, ticks_per_second=1, n_bots=50)
+    env = Environment(
+        agent_type=MyCar,
+        ticks_per_second=10,
+        n_bots=50,
+        n_points=10,
+        random_seed=2137,
+    )
     while env.is_running():
         current_cost, is_running = env.step()
         print(current_cost, is_running)

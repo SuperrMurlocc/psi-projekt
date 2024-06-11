@@ -12,11 +12,11 @@ from psi_environment.data.car import Car
 class Environment:
     def __init__(
         self,
-        random_seed: int = None,
         agent_type: Type[Car] | None = None,
         ticks_per_second: int = 10,
         n_bots: int = 10,
         n_points: int = 3,
+        random_seed: int = None,
     ):
         if random_seed is None:
             random_seed = random.randint(0, 2137)

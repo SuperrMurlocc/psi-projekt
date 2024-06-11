@@ -131,9 +131,8 @@ class Game:
                     )
                     self._screen.blit(self.grass, [idx * TILE_SIZE, idy * TILE_SIZE])
 
-        rev_dict = {v: k for k, v in self._map._map_state._node_indices.items()}
         for car in self._map._cars:
-            pos = rev_dict[car.road_key[0]]
+            pos = self._map._map_state._node_indices[car.road_key[0]]
             direction = self._map._map_state._edges[car.road_key]
             x, y = pos
 
