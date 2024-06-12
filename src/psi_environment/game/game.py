@@ -65,6 +65,11 @@ class Game:
         ) as car_down_path:
             self.car_down = pygame.image.load(str(car_down_path))
 
+        with importlib.resources.path(
+            "psi_environment.game.resources", "star.png"
+        ) as star_path:
+            self.star = pygame.image.load(str(star_path))
+            
     def __del__(self):
         pygame.quit()
 
@@ -130,6 +135,13 @@ class Game:
                         self.grass, (TILE_SIZE, TILE_SIZE)
                     )
                     self._screen.blit(self.grass, [idx * TILE_SIZE, idy * TILE_SIZE])
+
+        for point in self._map._map_state._points.values():
+            x, y = point[0], point[1]
+            self._screen.blit(
+                pygame.transform.scale(self.star, (TILE_SIZE, TILE_SIZE)),
+                [x * TILE_SIZE, y * TILE_SIZE],
+            )
 
         for car in self._map._cars.values():
             pos = self._map._map_state._node_indices[car.road_key[0]]
