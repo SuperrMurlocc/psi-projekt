@@ -15,13 +15,22 @@ class Environment:
         ticks_per_second: int = 10,
         n_bots: int = 10,
         n_points: int = 3,
+        traffic_lights_percentage: float = 0.4,
+        traffic_lights_length: int = 10,
         random_seed: int = None,
     ):
         if random_seed is None:
             random_seed = random.randint(0, 2137)
         self._random_seed = random_seed
         np.random.seed(self._random_seed)
-        self._map = Map(self._random_seed, n_bots, agent_type, n_points)
+        self._map = Map(
+            random_seed=self._random_seed,
+            n_bots=n_bots,
+            agent_type=agent_type,
+            n_points=n_points,
+            traffic_lights_percentage=traffic_lights_percentage,
+            traffic_lights_length=traffic_lights_length,
+        )
         self._game = Game(
             self._map, random_seed=random_seed, ticks_per_second=ticks_per_second
         )

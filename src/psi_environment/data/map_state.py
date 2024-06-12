@@ -22,9 +22,9 @@ class Road:
         back_indicies: tuple[int, int],
         adjacent_nodes: set,
         cars_per_length: int = 2,
-        left_node: int = None,
-        right_node: int = None,
-        forward_node: int = None,
+        left_node: int | None = None,
+        right_node: int | None = None,
+        forward_node: int | None = None,
     ):
         self.length = length_on_map * cars_per_length
         self._cars_per_length = cars_per_length
@@ -48,7 +48,7 @@ class Road:
         return self.length - 1 - pos
 
     def __repr__(self) -> str:
-        return repr(self._road)
+        return f"{self.__class__.__name__}({self.get_key()}, {repr(self._road)})"
 
     def __getitem__(self, idx: int):
         return self._road[idx]
@@ -63,27 +63,27 @@ class Road:
         return (self._back_node, self._front_node)
 
     def get_left_road_key(self):
-        if self._left_node:
+        if self._left_node is not None:
             return self._front_node, self._left_node
         return None
 
     def get_right_road_key(self):
-        if self._right_node:
+        if self._right_node is not None:
             return self._front_node, self._right_node
         return None
 
     def get_reverse_right_road_key(self):
-        if self._right_node:
+        if self._right_node is not None:
             return self._right_node, self._front_node
         return None
 
     def get_forward_road_key(self):
-        if self._forward_node:
+        if self._forward_node is not None:
             return self._front_node, self._forward_node
         return None
 
     def get_reverse_forward_road_key(self):
-        if self._forward_node:
+        if self._forward_node is not None:
             return self._forward_node, self._front_node
         return None
 
@@ -133,6 +133,44 @@ class Direction(IntEnum):
         return Direction((other - self + 4) % 4)
 
 
+class TrafficLight:
+    def __init__(
+        self,
+        node: int,
+        up_node: int | None = None,
+        down_node: int | None = None,
+        left_node: int | None = None,
+        right_node: int | None = None,
+        blocked_direction: Direction = Direction.UP,
+    ):
+        self._node = node
+        self._up_node = up_node
+        self._down_node = down_node
+        self._left_node = left_node
+        self._right_node = right_node
+        self._blocked_direction = blocked_direction
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._node}, {self._blocked_direction})"
+
+    def get_blocked_road_keys(self) -> list[tuple[int, int]]:
+        road_keys = []
+        if self._blocked_direction in (Direction.UP, Direction.DOWN):
+            if self._up_node is not None:
+                road_keys.append((self._up_node, self._node))
+            if self._down_node is not None:
+                road_keys.append((self._down_node, self._node))
+        elif self._blocked_direction in (Direction.LEFT, Direction.RIGHT):
+            if self._left_node is not None:
+                road_keys.append((self._left_node, self._node))
+            if self._right_node is not None:
+                road_keys.append((self._right_node, self._node))
+        return road_keys
+
+    def switch_lights(self):
+        self._blocked_direction = Direction((self._blocked_direction + 1) % 4)
+
+
 def get_map(filename="sample_map.txt") -> np.ndarray:
     """
     Generates array map of a sample map saved in ./game/resources/sample.map.txt
@@ -154,12 +192,12 @@ def get_node_indices(map_array) -> dict[int, tuple[int, int]]:
     """
 
     node_indices = {}
-    index = 0
+    id = 0
     for y in range(map_array.shape[0]):
         for x in range(map_array.shape[1]):
             if map_array[y][x] == NODE_CHARACTER:
-                node_indices[index] = (x, y)
-                index += 1
+                node_indices[id] = (x, y)
+                id += 1
     return node_indices
 
 
@@ -178,7 +216,7 @@ def create_adjacency_matrix(
 
     directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
 
-    for node_index, (x, y) in node_indices.items():
+    for node_id, (x, y) in node_indices.items():
         for dx, dy in directions:
             route_length = 1
             while True:
@@ -193,9 +231,9 @@ def create_adjacency_matrix(
 
             # if we found a node
             if (nx, ny) in indices_node and content[ny][nx] == NODE_CHARACTER:
-                neighbor_index = indices_node[(nx, ny)]
+                neighbor_id = indices_node[(nx, ny)]
                 # subtract 1 because we don't count the node itself
-                adjacency_matrix[node_index, neighbor_index] = route_length - 1
+                adjacency_matrix[node_id, neighbor_id] = route_length - 1
 
     return adjacency_matrix
 
@@ -204,9 +242,9 @@ def create_edges(
     node_indices: dict[int, tuple[int, int]], adjacency_matrix: np.ndarray
 ) -> dict[tuple[int, int], Direction]:
     edges = {}
-    for x_index, (x_x, x_y) in node_indices.items():
-        for y_index, (y_x, y_y) in node_indices.items():
-            if not np.isnan(adjacency_matrix[x_index, y_index]):
+    for x_id, (x_x, x_y) in node_indices.items():
+        for y_id, (y_x, y_y) in node_indices.items():
+            if not np.isnan(adjacency_matrix[x_id, y_id]):
                 x_pos = np.array([x_x, x_y])
                 y_pos = np.array([y_x, y_y])
                 diff = y_pos - x_pos
@@ -220,7 +258,7 @@ def create_edges(
                 elif diff[1] < 0:
                     direction = Direction.UP
 
-                edges[(x_index, y_index)] = direction
+                edges[(x_id, y_id)] = direction
     return edges
 
 
@@ -264,8 +302,61 @@ def create_roads(
     return roads
 
 
+def create_traffic_lights(
+    edges: dict[tuple[int, int], Direction],
+    adjacency_matrix: np.ndarray,
+    percentage_of_nodes: float = 0.4,
+) -> dict[int, TrafficLight]:
+    node_connections = {}
+    for node_id in range(adjacency_matrix.shape[0]):
+        n_of_connections = np.count_nonzero(~np.isnan(adjacency_matrix[node_id]))
+        node_connections[node_id] = n_of_connections
+
+    available_nodes = [
+        node_id for node_id in node_connections.keys() if node_connections[node_id] > 2
+    ]
+
+    traffic_light_nodes = np.random.choice(
+        available_nodes,
+        np.round(len(available_nodes) * percentage_of_nodes).astype(int),
+        replace=False,
+    )
+
+    traffic_lights = {}
+    for node in traffic_light_nodes:
+        adjacent_nodes = [edge[1] for edge in edges.keys() if edge[0] == node]
+
+        up_node = None
+        down_node = None
+        left_node = None
+        right_node = None
+
+        for adjacent_node in adjacent_nodes:
+            node_direction = edges[(adjacent_node, node)]
+
+            if node_direction == Direction.LEFT:
+                right_node = adjacent_node
+            elif node_direction == Direction.RIGHT:
+                left_node = adjacent_node
+            elif node_direction == Direction.UP:
+                down_node = adjacent_node
+            elif node_direction == Direction.DOWN:
+                up_node = adjacent_node
+
+        traffic_light = TrafficLight(
+            node=node,
+            up_node=up_node,
+            down_node=down_node,
+            left_node=left_node,
+            right_node=right_node,
+        )
+        traffic_lights[node] = traffic_light
+
+    return traffic_lights
+
+
 class MapState:
-    def __init__(self, random_seed: int):
+    def __init__(self, random_seed: int, traffic_light_percentage: float = 0.4):
         self._random_seed = random_seed
         self._map_array = get_map()
         self._node_indices = get_node_indices(self._map_array)
@@ -275,6 +366,9 @@ class MapState:
         self._edges = create_edges(self._node_indices, self._adjacency_matrix)
         self._roads = create_roads(
             self._edges, self._adjacency_matrix, self._node_indices
+        )
+        self._traffic_lights = create_traffic_lights(
+            self._edges, self._adjacency_matrix, traffic_light_percentage
         )
         self._cars = {}
         self._points = {}
@@ -360,6 +454,14 @@ class MapState:
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
             current_road = self.get_road(car_road_key)
+            blocked_road_keys = []
+            traffic_light = self.get_traffic_light(car_road_key[1])
+            if traffic_light is not None:
+                blocked_road_keys = traffic_light.get_blocked_road_keys()
+
+            if current_road.get_key() in blocked_road_keys:
+                results.append((car_id, False, car_road_key, car_road_pos))
+                continue
 
             next_road_key = None
             if action == Action.RIGHT:
@@ -375,7 +477,7 @@ class MapState:
                 # check if need to give way to right car
                 right_road_key = current_road.get_reverse_right_road_key()
                 right_road = self.get_road(right_road_key) if right_road_key else None
-                if right_road is not None:
+                if right_road is not None and right_road_key not in blocked_road_keys:
                     right_car = right_road.get_car_on_last_position()
                     if right_car in node_actions:
                         results.append((car_id, False, car_road_key, car_road_pos))
@@ -385,7 +487,7 @@ class MapState:
                 # check if need to give way to front car
                 front_road_key = current_road.get_reverse_forward_road_key()
                 front_road = self.get_road(front_road_key) if front_road_key else None
-                if front_road is not None:
+                if front_road is not None and front_road_key not in blocked_road_keys:
                     front_car = front_road.get_car_on_last_position()
                     if front_car in node_actions:
                         front_car_action = node_actions[front_car][1]
@@ -398,7 +500,8 @@ class MapState:
                             results.append((car_id, False, car_road_key, car_road_pos))
                             continue
 
-            #TODO fix deadlock if 4 cars arive to the same node
+            # TODO fix deadlock if 4 cars arive to the same node
+            # TODO check for cars that could move after car blocking them moved away
 
             next_road = self.get_road(next_road_key) if next_road_key else None
 
@@ -431,6 +534,10 @@ class MapState:
                 self._points.pop(id)
                 break
 
+    def _switch_traffic_lights(self):
+        for traffic_light in self._traffic_lights.values():
+            traffic_light.switch_lights()
+
     def get_road_tiles_map_positions(self) -> list[tuple[int, int]]:
         road_tiles = []
         for y in range(self._map_array.shape[0]):
@@ -454,14 +561,23 @@ class MapState:
     def get_road(self, key: tuple[int, int]):
         return self._roads[key]
 
+    def get_traffic_lights(self):
+        return self._traffic_lights
+
+    def get_traffic_light(self, node_id: int):
+        return self._traffic_lights.get(node_id, None)
+
     def get_cars(self):
         return self._cars
 
     def get_points(self):
         return self._points
 
-    def get_node_map_position(self, node_index: int):
-        return self._node_indices[node_index]
+    def get_number_of_node_connections(self, node_id: int):
+        return np.count_nonzero(~np.isnan(self._adjacency_matrix[node_id]))
+
+    def get_node_map_position(self, node_id: int):
+        return self._node_indices[node_id]
 
     def get_road_position_map_position(self, road_key: tuple[int, int], road_pos: int):
         return self._roads[road_key].get_map_position(road_pos)

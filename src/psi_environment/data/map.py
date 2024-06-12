@@ -17,14 +17,15 @@ class Map:
         n_bots: int = 3,
         agent_type: Type[Car] | None = None,
         n_points: int = 3,
+        traffic_lights_percentage: float = 0.4,
+        traffic_lights_length: int = 10,
     ):
         self.n_points = n_points
-        self._map_state = MapState(random_seed)
-
+        self._map_state = MapState(random_seed, traffic_lights_percentage)
         self._cars: dict[int, Car] = {}
         self._agent_car_id = None
-
         self._random_seed = random_seed
+        self._traffic_lights_length = traffic_lights_length
 
         cars_data = self._map_state.add_cars(n_bots + 1)
 
@@ -39,6 +40,7 @@ class Map:
             self._cars[car_id] = car
 
         self._map_state.add_points(n_points)
+        self._step = 0
 
     def step(self):
         actions = [
@@ -57,6 +59,10 @@ class Map:
             if car_moved:
                 car.road_key = car_road_key
                 car.road_pos = car_road_pos
+
+        self._step += 1
+        if self._step % self._traffic_lights_length == 0:
+            self._map_state._switch_traffic_lights()
 
     def is_game_over(self) -> bool:
         return len(self._map_state.get_points()) == 0
