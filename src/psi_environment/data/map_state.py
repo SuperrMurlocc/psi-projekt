@@ -283,41 +283,60 @@ class MapState:
 
         return self._points
 
-    def move_car(self, car_id: int, action: Action, collect_point: bool = False):
-        car_road_key = self._cars[car_id][0]
-        car_road_pos = self._cars[car_id][1]
+    def move_cars(
+        self, actions: list[tuple[int, Action, bool]]
+    ) -> list[tuple[int, bool, tuple[int, int], int]]:
+        results = []
+        for car_id, action, collect_point in actions:
+            car_road_key = self._cars[car_id][0]
+            car_road_pos = self._cars[car_id][1]
 
-        current_road = self.get_road(car_road_key)
-        if action == Action.BACK:
-            inv_road_key = current_road.get_backward_road_key()
-            next_road = self.get_road(inv_road_key)
-            inv_pos = current_road.get_inverted_position(car_road_pos)
+            current_road = self.get_road(car_road_key)
+            if action == Action.BACK:
+                inv_road_key = current_road.get_backward_road_key()
+                next_road = self.get_road(inv_road_key)
+                inv_pos = current_road.get_inverted_position(car_road_pos)
 
-            if next_road[inv_pos] == 0:
-                return self._move_car(car_id, next_road, inv_pos, collect_point)
-            return False, car_road_key, car_road_pos
+                if next_road[inv_pos] == 0:
+                    results.append(
+                        self._move_car(car_id, next_road, inv_pos, collect_point)
+                    )
+                    continue
+                results.append((car_id, False, car_road_key, car_road_pos))
+                continue
 
-        # Car is not at the end of the road
-        if current_road[-1] != car_id:
-            if action == Action.FORWARD:
-                next_pos = car_road_pos + 1
-                if current_road[next_pos] == 0:
-                    return self._move_car(car_id, current_road, next_pos, collect_point)
-            return False, car_road_key, car_road_pos
+            # Car is not at the end of the road
+            if current_road[-1] != car_id:
+                if action == Action.FORWARD:
+                    next_pos = car_road_pos + 1
+                    if current_road[next_pos] == 0:
+                        results.append(
+                            self._move_car(
+                                car_id, current_road, next_pos, collect_point
+                            )
+                        )
+                        continue
+                results.append((car_id, False, car_road_key, car_road_pos))
+                continue
 
-        # Car is at the end of the road
-        next_road_key = None
-        if action == Action.LEFT:
-            next_road_key = current_road.get_left_road_key()
-        elif action == Action.RIGHT:
-            next_road_key = current_road.get_right_road_key()
-        elif action == Action.FORWARD:
-            next_road_key = current_road.get_forward_road_key()
-        next_road = self.get_road(next_road_key) if next_road_key else None
-        if next_road and next_road[0] == 0:
-            next_pos = 0
-            return self._move_car(car_id, next_road, next_pos, collect_point)
-        return False, car_road_key, car_road_pos
+            # Car is at the end of the road
+            next_road_key = None
+            if action == Action.LEFT:
+                next_road_key = current_road.get_left_road_key()
+            elif action == Action.RIGHT:
+                next_road_key = current_road.get_right_road_key()
+            elif action == Action.FORWARD:
+                next_road_key = current_road.get_forward_road_key()
+            next_road = self.get_road(next_road_key) if next_road_key else None
+            if next_road and next_road[0] == 0:
+                next_pos = 0
+                results.append(
+                    self._move_car(car_id, next_road, next_pos, collect_point)
+                )
+                continue
+            results.append((car_id, False, car_road_key, car_road_pos))
+
+        return results
 
     def _move_car(self, car_id: int, road: Road, road_pos: int, collect_point: bool):
         car_road_key = self._cars[car_id][0]
@@ -329,7 +348,7 @@ class MapState:
         self._cars[car_id] = (road.get_key(), road_pos)
         if collect_point:
             self._update_collected_points(car_road_key, car_road_pos)
-        return True, road.get_key(), road_pos
+        return car_id, True, road.get_key(), road_pos
 
     def _update_collected_points(self, road_key: tuple[int, int], road_pos: int):
         car_map_position = self.get_road_position_map_position(road_key, road_pos)
@@ -360,10 +379,10 @@ class MapState:
 
     def get_road(self, key: tuple[int, int]):
         return self._roads[key]
-    
+
     def get_cars(self):
         return self._cars
-    
+
     def get_points(self):
         return self._points
 

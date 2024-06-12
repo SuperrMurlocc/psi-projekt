@@ -131,7 +131,7 @@ class Game:
                     )
                     self._screen.blit(self.grass, [idx * TILE_SIZE, idy * TILE_SIZE])
 
-        for car in self._map._cars:
+        for car in self._map._cars.values():
             pos = self._map._map_state._node_indices[car.road_key[0]]
             direction = self._map._map_state._edges[car.road_key]
             x, y = pos
