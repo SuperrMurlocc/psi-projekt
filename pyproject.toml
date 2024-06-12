@@ -13,6 +13,9 @@ requires-python = ">=3.10"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"game.resources" = ["*.png", "*.txt"]
+
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 

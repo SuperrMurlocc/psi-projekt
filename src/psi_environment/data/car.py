@@ -36,6 +36,9 @@ class DummyAgent(Car):
 
         self._random_seed = random_seed
         self._step = 0
+        self._last_action = None
+        self._last_road_key = None
+        self._last_road_pos = None
 
     def get_action(self, map_state: MapState) -> Action:
         self._step += 1
@@ -45,7 +48,18 @@ class DummyAgent(Car):
 
         api = EnvironmentAPI(map_state)
 
+        action = rng.choice([Action.FORWARD, Action.BACK], p=[0.95, 0.05])
         if api.is_position_road_end(self.road_key, self.road_pos):
-            return rng.integers(1, 4)
+            if (
+                self._last_road_key == self.road_key
+                and self._last_road_pos == self.road_pos
+            ):
+                action = self._last_action
+            else:
+                available_turns = api.get_available_turns(self.road_key)
+                action = rng.choice(available_turns)
 
-        return rng.choice([Action.FORWARD, Action.BACK], p=[0.95, 0.05])
+        self._last_action = action
+        self._last_road_key = self.road_key
+        self._last_road_pos = self.road_pos
+        return action

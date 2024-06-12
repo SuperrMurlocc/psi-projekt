@@ -72,9 +72,19 @@ class Road:
             return self._front_node, self._right_node
         return None
 
+    def get_reverse_right_road_key(self):
+        if self._right_node:
+            return self._right_node, self._front_node
+        return None
+
     def get_forward_road_key(self):
         if self._forward_node:
             return self._front_node, self._forward_node
+        return None
+
+    def get_reverse_forward_road_key(self):
+        if self._forward_node:
+            return self._forward_node, self._front_node
         return None
 
     def get_backward_road_key(self):
@@ -92,6 +102,25 @@ class Road:
         diff = back_indices - front_indices
         diff = np.where(diff != 0, relative_pos * np.sign(diff), 0)
         return tuple(back_indices - diff)
+
+    def is_position_road_end(self, pos_idx: int) -> bool:
+        return pos_idx == self.length - 1
+
+    def front_is_empty(self) -> bool:
+        return self._road[0] == 0
+
+    def get_car_on_last_position(self) -> int:
+        return self._road[-1]
+
+    def get_available_turns(self):
+        available_turns = [Action.BACK]
+        if self._forward_node is not None:
+            available_turns.append(Action.FORWARD)
+        if self._left_node is not None:
+            available_turns.append(Action.LEFT)
+        if self._right_node is not None:
+            available_turns.append(Action.RIGHT)
+        return available_turns
 
 
 class Direction(IntEnum):
@@ -286,13 +315,33 @@ class MapState:
     def move_cars(
         self, actions: list[tuple[int, Action, bool]]
     ) -> list[tuple[int, bool, tuple[int, int], int]]:
+        road_actions = {}
+        node_actions = {}
         results = []
         for car_id, action, collect_point in actions:
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
-
             current_road = self.get_road(car_road_key)
-            if action == Action.BACK:
+
+            if current_road.is_position_road_end(car_road_pos):
+                node_actions[car_id] = (car_id, action, collect_point)
+            else:
+                road_actions[car_id] = (car_id, action, collect_point)
+
+        for car_id, action, collect_point in road_actions.values():
+            car_road_key = self._cars[car_id][0]
+            car_road_pos = self._cars[car_id][1]
+            current_road = self.get_road(car_road_key)
+
+            if action == Action.FORWARD:
+                next_pos = car_road_pos + 1
+                if current_road[next_pos] == 0:
+                    results.append(
+                        self._move_car(car_id, current_road, next_pos, collect_point)
+                    )
+                    continue
+
+            elif action == Action.BACK:
                 inv_road_key = current_road.get_backward_road_key()
                 next_road = self.get_road(inv_road_key)
                 inv_pos = current_road.get_inverted_position(car_road_pos)
@@ -302,33 +351,58 @@ class MapState:
                         self._move_car(car_id, next_road, inv_pos, collect_point)
                     )
                     continue
-                results.append((car_id, False, car_road_key, car_road_pos))
-                continue
 
-            # Car is not at the end of the road
-            if current_road[-1] != car_id:
-                if action == Action.FORWARD:
-                    next_pos = car_road_pos + 1
-                    if current_road[next_pos] == 0:
-                        results.append(
-                            self._move_car(
-                                car_id, current_road, next_pos, collect_point
-                            )
-                        )
-                        continue
-                results.append((car_id, False, car_road_key, car_road_pos))
-                continue
+            # Any other action on the road is invalid
+            results.append((car_id, False, car_road_key, car_road_pos))
+            continue
 
-            # Car is at the end of the road
+        for car_id, action, collect_point in node_actions.values():
+            car_road_key = self._cars[car_id][0]
+            car_road_pos = self._cars[car_id][1]
+            current_road = self.get_road(car_road_key)
+
             next_road_key = None
-            if action == Action.LEFT:
-                next_road_key = current_road.get_left_road_key()
-            elif action == Action.RIGHT:
+            if action == Action.RIGHT:
                 next_road_key = current_road.get_right_road_key()
             elif action == Action.FORWARD:
                 next_road_key = current_road.get_forward_road_key()
+            elif action == Action.LEFT:
+                next_road_key = current_road.get_left_road_key()
+            elif action == Action.BACK:
+                next_road_key = current_road.get_backward_road_key()
+
+            if action in (Action.FORWARD, Action.LEFT, Action.BACK):
+                # check if need to give way to right car
+                right_road_key = current_road.get_reverse_right_road_key()
+                right_road = self.get_road(right_road_key) if right_road_key else None
+                if right_road is not None:
+                    right_car = right_road.get_car_on_last_position()
+                    if right_car in node_actions:
+                        results.append((car_id, False, car_road_key, car_road_pos))
+                        continue
+
+            if action in (Action.LEFT, Action.BACK):
+                # check if need to give way to front car
+                front_road_key = current_road.get_reverse_forward_road_key()
+                front_road = self.get_road(front_road_key) if front_road_key else None
+                if front_road is not None:
+                    front_car = front_road.get_car_on_last_position()
+                    if front_car in node_actions:
+                        front_car_action = node_actions[front_car][1]
+                        # always give way to car driving forward
+                        if front_car_action == Action.FORWARD:
+                            results.append((car_id, False, car_road_key, car_road_pos))
+                            continue
+                        # if turning left, give way to car driving right
+                        elif front_car_action == Action.RIGHT and action == Action.LEFT:
+                            results.append((car_id, False, car_road_key, car_road_pos))
+                            continue
+
+            #TODO fix deadlock if 4 cars arive to the same node
+
             next_road = self.get_road(next_road_key) if next_road_key else None
-            if next_road and next_road[0] == 0:
+
+            if next_road and next_road.front_is_empty():
                 next_pos = 0
                 results.append(
                     self._move_car(car_id, next_road, next_pos, collect_point)
