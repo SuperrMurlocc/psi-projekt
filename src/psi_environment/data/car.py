@@ -1,17 +1,10 @@
-from enum import IntEnum
 from abc import abstractmethod
 
 import numpy as np
 
 from psi_environment.data.map_state import MapState
 from psi_environment.api.environment_api import EnvironmentAPI
-
-
-class Action(IntEnum):
-    RIGHT = 1
-    FORWARD = 2
-    LEFT = 3
-    BACK = 4
+from psi_environment.data.action import Action
 
 
 class Car:
@@ -22,18 +15,6 @@ class Car:
 
     @abstractmethod
     def get_action(self, map_state: MapState) -> Action:
-        pass
-
-    def turn_left(self):
-        pass
-
-    def turn_right(self):
-        pass
-
-    def turn_back(self):
-        pass
-
-    def go_forward(self):
         pass
 
     def get_car_id(self):

@@ -68,7 +68,8 @@ class Game:
     def __del__(self):
         pygame.quit()
 
-    def step(self, action: int) -> tuple[Any, float, bool]:
+    def step(self):
+        self._timestep += 1
         self.render()
         self.is_running()
 
@@ -77,6 +78,10 @@ class Game:
 
     def reset(self):
         raise NotImplementedError
+
+    def stop(self):
+        self._running = False
+        pygame.quit()
 
     def render(self):
         # Check for all events, such as QUIT. Probably not the right place for it, but it's a start. TODO - move it to more appropriate place.
@@ -126,9 +131,8 @@ class Game:
                     )
                     self._screen.blit(self.grass, [idx * TILE_SIZE, idy * TILE_SIZE])
 
-        rev_dict = {v: k for k, v in self._map._map_state._node_indices.items()}
-        for car in self._map._cars:
-            pos = rev_dict[car.road_key[0]]
+        for car in self._map._cars.values():
+            pos = self._map._map_state._node_indices[car.road_key[0]]
             direction = self._map._map_state._edges[car.road_key]
             x, y = pos
 

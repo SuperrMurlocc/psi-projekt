@@ -7,14 +7,14 @@ class EnvironmentAPI:
     def __init__(self, map_state: MapState):
         self._map_state = map_state
 
-    def get_adjacency_matrix(self):
+    def get_adjacency_matrix(self) -> np.ndarray:
         """
         Returns the adjacency matrix of the environment's nodes
         :return: numpy array with shape (num_nodes, num_nodes)
         """
         return self._map_state.get_adjacency_matrix()
 
-    def get_traffic(self):
+    def get_traffic(self) -> np.ndarray:
         """
         Returns the traffic matrix
         :return: numpy array with shape (num_nodes, num_nodes)
@@ -43,7 +43,7 @@ class EnvironmentAPI:
         if (from_node, to_node) not in roads.keys():
             return np.nan
 
-        return np.count_nonzero(roads[(from_node, to_node)])
+        return roads[(from_node, to_node)].get_number_of_cars()
 
     def is_position_road_end(self, road_key: tuple[int, int], pos_idx: int) -> bool:
         road = self._map_state.get_road(road_key)

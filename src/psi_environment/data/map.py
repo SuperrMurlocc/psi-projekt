@@ -1,73 +1,65 @@
+from typing import Type
+
 import numpy as np
 
 from psi_environment.data.car import Car, DummyAgent
 from psi_environment.data.map_state import MapState, Road
-from psi_environment.data.car import Action
+from psi_environment.data.action import Action
+from psi_environment.data.point import Point
+
+AGENT_ID = 1
 
 
 class Map:
-    def __init__(self, random_seed: int, n_bots: int = 3):
+    def __init__(
+        self,
+        random_seed: int,
+        n_bots: int = 3,
+        agent_type: Type[Car] | None = None,
+        n_points: int = 3,
+    ):
+        self.n_points = n_points
         self._map_state = MapState(random_seed)
 
-        self._cars: list[Car] = []
+        self._cars: dict[int, Car] = {}
+        self._agent_car_id = None
 
         self._random_seed = random_seed
 
-        # TODO: breaks if number of cars is greater than number of roads
-        roads = self._map_state.get_roads()
-        road_idxs = np.random.choice(len(roads), size=n_bots)
-        road_keys = [list(roads)[idx] for idx in road_idxs]
+        cars_data = self._map_state.add_cars(n_bots + 1)
 
-        for i, road_key in enumerate(road_keys):
-            car_idx = i + 1
-            road_pos_idx = self._map_state.add_car(road_key, car_idx)
-            car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_idx)
-            self._cars.append(car)
+        for car_id, (road_key, road_pos_idx) in cars_data.items():
+            if car_id == AGENT_ID and agent_type is not None:
+                car = agent_type(road_key, road_pos_idx, car_id)
+                self._agent_car_id = car_id
+                self._cars[car_id] = car
+                continue
+
+            car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_id)
+            self._cars[car_id] = car
+
+        self._map_state.add_points(n_points)
 
     def step(self):
-        actions = [(car, car.get_action(self._map_state)) for car in self._cars]
-        actions.sort(key=lambda x: x[1])
-
-        for car, action in actions:
-            current_road = self._map_state.get_road(car.road_key)
-            if action == Action.BACK:
-                inv_road_key = current_road.get_backward_road_key()
-                next_road = self._map_state.get_road(inv_road_key)
-                inv_pos = current_road.get_inverted_position(car.road_pos)
-
-                if next_road[inv_pos] == 0:
-                    self._move_car(car, next_road, inv_pos)
-                continue
-
-            # Car is not at the end of the road
-            if current_road[-1] != car.get_car_id():
-                if action == Action.FORWARD:
-                    next_pos = car.road_pos + 1
-                    if current_road[next_pos] == 0:
-                        self._move_car(car, current_road, next_pos)
-                continue
-
-            # Car is at the end of the road
-            next_road_key = None
-            if action == Action.LEFT:
-                next_road_key = current_road.get_left_road_key()
-            elif action == Action.RIGHT:
-                next_road_key = current_road.get_right_road_key()
-            elif action == Action.FORWARD:
-                next_road_key = current_road.get_forward_road_key()
-            next_road = (
-                self._map_state.get_road(next_road_key) if next_road_key else None
+        actions = [
+            (
+                car_id,
+                car.get_action(self._map_state),
+                car_id == self._agent_car_id,
             )
-            if next_road and next_road[0] == 0:
-                next_pos = 0
-                self._move_car(car, next_road, next_pos)
+            for car_id, car in self._cars.items()
+        ]
+        actions.sort(key=lambda x: x[1])
+        action_results = self._map_state.move_cars(actions)
 
-    def _move_car(self, car: Car, road: Road, road_pos: int):
-        current_road = self._map_state.get_road(car.road_key)
-        current_road[car.road_pos] = 0
-        road[road_pos] = car.get_car_id()
-        car.road_pos = road_pos
-        car.road_key = road.get_key()
+        for car_id, car_moved, car_road_key, car_road_pos in action_results:
+            car = self._cars[car_id]
+            if car_moved:
+                car.road_key = car_road_key
+                car.road_pos = car_road_pos
+
+    def is_game_over(self) -> bool:
+        return len(self._map_state.get_points()) == 0
 
     def get_map_state(self) -> MapState:
         return self._map_state
