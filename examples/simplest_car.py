@@ -15,6 +15,7 @@ if __name__ == "__main__":
         ticks_per_second=10,
         n_bots=50,
         n_points=10,
+        traffic_lights_length=10,
         random_seed=2137,
     )
     while env.is_running():

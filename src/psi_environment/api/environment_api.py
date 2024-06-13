@@ -1,6 +1,7 @@
 import numpy as np
 
 from psi_environment.data.map_state import MapState
+from psi_environment.data.action import Action
 
 
 class EnvironmentAPI:
@@ -47,4 +48,8 @@ class EnvironmentAPI:
 
     def is_position_road_end(self, road_key: tuple[int, int], pos_idx: int) -> bool:
         road = self._map_state.get_road(road_key)
-        return pos_idx == road.length - 1
+        return road.is_position_road_end(pos_idx)
+
+    def get_available_turns(self, road_key: tuple[int, int]) -> list[Action]:
+        road = self._map_state.get_road(road_key)
+        return road.get_available_turns()
