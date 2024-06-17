@@ -28,7 +28,7 @@ class EnvironmentAPI:
         traffic_matrix = np.full((size, size), np.nan)
 
         for i in range(size):
-            for j in range(size):map status
+            for j in range(size):
                 traffic_matrix[i, j] = self.get_specific_traffic(i, j)
         return traffic_matrix
 
