@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, List
 
 import numpy as np
 
@@ -7,15 +7,13 @@ from psi_environment.data.map_state import MapState, Road
 from psi_environment.data.action import Action
 from psi_environment.data.point import Point
 
-AGENT_ID = 1
-
 
 class Map:
     def __init__(
         self,
         random_seed: int,
         n_bots: int = 3,
-        agent_type: Type[Car] | None = None,
+        agent_types: List[Type[Car]] | None = None,
         n_points: int = 3,
         traffic_lights_percentage: float = 0.4,
         traffic_lights_length: int = 10,
@@ -23,17 +21,23 @@ class Map:
         self.n_points = n_points
         self._map_state = MapState(random_seed, traffic_lights_percentage)
         self._cars: dict[int, Car] = {}
-        self._agent_car_id = None
+        self._agents: dict[int, Car] = {}
         self._random_seed = random_seed
         self._traffic_lights_length = traffic_lights_length
 
-        cars_data = self._map_state.add_cars(n_bots + 1)
+        n_agents = len(agent_types) if agent_types else 0
+
+        cars_data = self._map_state.add_cars(n_bots + n_agents)
+
+        agent_iter = 0
 
         for car_id, (road_key, road_pos_idx) in cars_data.items():
-            if car_id == AGENT_ID and agent_type is not None:
+            if agent_types and agent_iter < n_agents:
+                agent_type = agent_types[agent_iter]
                 car = agent_type(road_key, road_pos_idx, car_id)
-                self._agent_car_id = car_id
+                self._agents[car_id] = car
                 self._cars[car_id] = car
+                agent_iter += 1
                 continue
 
             car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_id)
@@ -47,7 +51,7 @@ class Map:
             (
                 car_id,
                 car.get_action(self._map_state),
-                car_id == self._agent_car_id,
+                car_id in self._agents.keys(),
             )
             for car_id, car in self._cars.items()
         ]

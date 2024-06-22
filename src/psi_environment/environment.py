@@ -1,5 +1,5 @@
 import random
-from typing import Any, Type
+from typing import Any, Type, List
 
 import numpy as np
 
@@ -11,7 +11,7 @@ from psi_environment.data.car import Car
 class Environment:
     def __init__(
         self,
-        agent_type: Type[Car] | None = None,
+        agent_types: List[Type[Car]] | None = None,
         ticks_per_second: int = 10,
         n_bots: int = 10,
         n_points: int = 3,
@@ -26,7 +26,7 @@ class Environment:
         self._map = Map(
             random_seed=self._random_seed,
             n_bots=n_bots,
-            agent_type=agent_type,
+            agent_types=agent_types,
             n_points=n_points,
             traffic_lights_percentage=traffic_lights_percentage,
             traffic_lights_length=traffic_lights_length,
