@@ -36,11 +36,9 @@ class Map:
                 agent_type = agent_types[agent_iter]
                 car = agent_type(road_key, road_pos_idx, car_id)
                 self._agents[car_id] = car
-                self._cars[car_id] = car
                 agent_iter += 1
-                continue
-
-            car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_id)
+            else:
+                car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_id)
             self._cars[car_id] = car
 
         self._map_state.add_points(n_points)
@@ -51,7 +49,7 @@ class Map:
             (
                 car_id,
                 car.get_action(self._map_state),
-                car_id in self._agents.keys(),
+                car_id in self._agents,
             )
             for car_id, car in self._cars.items()
         ]
