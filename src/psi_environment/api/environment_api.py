@@ -5,13 +5,15 @@ from psi_environment.data.action import Action
 
 
 class EnvironmentAPI:
-    """Defines the API for interacting with the environment, including functions for getting data about cost, map state, and traffic.
-    """
+    """Defines the API for interacting with the environment, including functions for
+    getting data about cost, map state, and traffic."""
+
     def __init__(self, map_state: MapState):
         self._map_state = map_state
 
     def get_adjacency_matrix(self) -> np.ndarray:
-        """Returns the adjacency matrix representing the connections between nodes in the map.
+        """Returns the adjacency matrix representing the connections between nodes in
+        the map.
 
         Returns:
             np.ndarray: The adjacency matrix of the map
@@ -22,7 +24,9 @@ class EnvironmentAPI:
         """Returns the traffic matrix, indicating the number of cars between nodes.
 
         Returns:
-            np.ndarray: A matrix with shape (num_nodes, num_nodes), where each element represents the traffic from one node to another.
+            np.ndarray: A matrix with shape (num_nodes, num_nodes), where each element
+                is an integer that represents the number of cars from one node to
+                another.
         """
         size = self._map_state.get_adjacency_matrix_size()
         traffic_matrix = np.full((size, size), np.nan)
@@ -33,7 +37,8 @@ class EnvironmentAPI:
         return traffic_matrix
 
     def get_specific_traffic(self, from_node: int, to_node: int) -> int:
-        """Returns the traffic from a specific node to another
+        """Returns the traffic from a specific node to another, indicating the number of
+        cars between nodes.
 
         Args:
             from_node (int): The index of the start node.

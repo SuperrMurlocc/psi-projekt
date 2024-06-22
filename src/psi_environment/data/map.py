@@ -11,9 +11,9 @@ AGENT_ID = 1
 
 
 class Map:
-    """The Map class manages the overall 
-       state and behavior of the simulation, including cars, points, 
-       and traffic lights. It initializes the map, handles simulation steps, and checks the game status.
+    """The Map class manages the initialization of the map state and the agents. It 
+    also provides higher level methods for interacting with the map state and agents, 
+    like handling game steps and checking if the game is over.
     """
     def __init__(
         self,
@@ -29,10 +29,14 @@ class Map:
         Args:
             random_seed (int): The seed used for random number generation.
             n_bots (int, optional): The number of bots to add to the map. Defaults to 3.
-            agent_type (Type[Car] | None, optional): The type of the agent car. Defaults to None.
-            n_points (int, optional): The number of points to be collected on the map. Defaults to 3.
-            traffic_lights_percentage (float, optional): The percentage of nodes with traffic lights. Defaults to 0.4.
-            traffic_lights_length (int, optional): The interval length for switching traffic lights. Defaults to 10.
+            agent_type (Type[Car] | None, optional): The type of the agent car. 
+                Defaults to None.
+            n_points (int, optional): The number of points to be collected on the map. 
+                Defaults to 3.
+            traffic_lights_percentage (float, optional): The percentage of nodes with 
+                traffic lights. Defaults to 0.4.
+            traffic_lights_length (int, optional): The interval length for switching 
+                traffic lights. Defaults to 10.
         """
         self.n_points = n_points
         self._map_state = MapState(random_seed, traffic_lights_percentage)
@@ -58,7 +62,9 @@ class Map:
 
     def step(self):
         """Advances the simulation by one step.
-           This method retrieves actions for each car, moves the cars, and switches traffic lights at specified intervals.
+        This method retrieves actions for each car and sends it to the map state, 
+        updates the cars position based on the map state response, and switches traffic
+        lights at specified intervals.
         """
         actions = [
             (
@@ -90,9 +96,9 @@ class Map:
         return len(self._map_state.get_points()) == 0
 
     def get_map_state(self) -> MapState:
-        """Returns the current state of the map.
+        """Returns the reference to the map state.
 
         Returns:
-            MapState: The current state of the map.
+            MapState: The reference to the map state.
         """
         return self._map_state

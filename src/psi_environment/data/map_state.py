@@ -13,8 +13,9 @@ ROAD_CHARACTERS = {H_ROAD_CHARACTER, V_ROAD_CHARACTER}
 
 
 class Road:
-    """The Road class represents a road in the simulation, managing its properties, cars, and connections to other roads.
-    """
+    """The Road class represents a road in the simulation, managing its properties,
+    traffic and connections to other roads."""
+
     def __init__(
         self,
         length_on_map: int,
@@ -37,10 +38,14 @@ class Road:
             back_node (int): The node at the back of the road.
             back_indicies (tuple[int, int]): The indices of the back node.
             adjacent_nodes (set): Set of adjacent nodes.
-            cars_per_length (int, optional): Number of cars per unit length of the road. Defaults to 2.
-            left_node (int | None, optional): The node you will reach by going left at the intersection. Defaults to None.
-            right_node (int | None, optional): The node you will reach by going right at the intersection. Defaults to None.
-            forward_node (int | None, optional): The node you will reach by going straight at the intersection. Defaults to None.
+            cars_per_length (int, optional): Number of cars per unit length of the road.
+                Defaults to 2.
+            left_node (int | None, optional): The node you will reach by going left at
+                the intersection. Defaults to None.
+            right_node (int | None, optional): The node you will reach by going right at
+                the intersection. Defaults to None.
+            forward_node (int | None, optional): The node you will reach by going
+                straight at the intersection. Defaults to None.
         """
         self.length = length_on_map * cars_per_length
         self._cars_per_length = cars_per_length
@@ -54,7 +59,7 @@ class Road:
         self._right_node = right_node
         self._forward_node = forward_node
 
-    def get_road(self):
+    def get_road(self) -> np.ndarray:
         """Returns the numpy array representing the car positions on the road.
 
         Returns:
@@ -62,7 +67,7 @@ class Road:
         """
         return self._road
 
-    def get_length(self):
+    def get_length(self) -> int:
         """Returns the length of the road.
 
         Returns:
@@ -71,7 +76,8 @@ class Road:
         return self.length
 
     def get_inverted_position(self, pos: int) -> int:
-        """Returns the inverted position on the road.
+        """Returns the inverted position on the road. Useful to get a position on the
+        backwards road when a car wants to turn back.
 
         Args:
             pos (int): The position on the road.
@@ -101,57 +107,65 @@ class Road:
         """
         return (self._back_node, self._front_node)
 
-    def get_left_road_key(self):
+    def get_left_road_key(self) -> tuple[int, int] | None:
         """Returns the key of the left road (if any).
 
         Returns:
-            tuple[int, int] | None: The key of the left road, or None if there is no left road.
+            tuple[int, int] | None: The key of the left road, or None if there is no
+                left road.
         """
         if self._left_node is not None:
             return self._front_node, self._left_node
         return None
 
-    def get_right_road_key(self):
+    def get_right_road_key(self) -> tuple[int, int] | None:
         """Returns the key of the right road (if any).
 
         Returns:
-            tuple[int, int] | None: The key of the right road, or None if there is no right road.
+            tuple[int, int] | None: The key of the right road, or None if there is no
+                right road.
         """
         if self._right_node is not None:
             return self._front_node, self._right_node
         return None
 
-    def get_reverse_right_road_key(self):
+    def get_reverse_right_road_key(self) -> tuple[int, int] | None:
         """Returns the key of the reverse right road (if any).
+        Reverse right road is the right road that is in the direction of the front node.
 
         Returns:
-            tuple[int, int] | None: The key of the reverse right road, or None if there is no reverse right road.
+            tuple[int, int] | None: The key of the reverse right road, or None if there
+                is no reverse right road.
         """
         if self._right_node is not None:
             return self._right_node, self._front_node
         return None
 
-    def get_forward_road_key(self):
+    def get_forward_road_key(self) -> tuple[int, int] | None:
         """Returns the key of the forward road (if any).
 
         Returns:
-            tuple[int, int] | None: The key of the forward road, or None if there is no forward road.
+            tuple[int, int] | None: The key of the forward road, or None if there is no
+                forward road.
         """
         if self._forward_node is not None:
             return self._front_node, self._forward_node
         return None
 
-    def get_reverse_forward_road_key(self):
+    def get_reverse_forward_road_key(self) -> tuple[int, int] | None:
         """Returns the key of the reverse forward road (if any).
+        Reverse forward road is the front road that is in the direction of the front
+        node.
 
         Returns:
-            tuple[int, int] | None: The key of the reverse forward road, or None if there is no reverse forward road.
+            tuple[int, int] | None: The key of the reverse forward road, or None if
+                there is no reverse forward road.
         """
         if self._forward_node is not None:
             return self._forward_node, self._front_node
         return None
 
-    def get_backward_road_key(self):
+    def get_backward_road_key(self) -> tuple[int, int]:
         """Returns the key of the backward road.
 
         Returns:
@@ -199,7 +213,7 @@ class Road:
         """
         return pos_idx == self.length - 1
 
-    def front_is_empty(self) -> bool:
+    def is_front_empty(self) -> bool:
         """Checks if the front position of the road is empty.
 
         Returns:
@@ -208,14 +222,14 @@ class Road:
         return self._road[0] == 0
 
     def get_car_on_last_position(self) -> int:
-        """Returns the car at the last position of the road.
+        """Returns the ID of the car at the last position of the road.
 
         Returns:
             int: The car at the last position.
         """
         return self._road[-1]
 
-    def get_available_turns(self):
+    def get_available_turns(self) -> list[Action]:
         """Returns a list of available turns from the current road.
 
         Returns:
@@ -232,8 +246,8 @@ class Road:
 
 
 class Direction(IntEnum):
-    """The Direction enum represents the possible directions for movement (UP, RIGHT, DOWN, LEFT).
-    """
+    """The Direction enum represents the possible directions on the map topology."""
+
     UP = 0
     RIGHT = 1
     DOWN = 2
@@ -252,8 +266,9 @@ class Direction(IntEnum):
 
 
 class TrafficLight:
-    """The TrafficLight class represents a traffic light at a specific node, managing blocked directions and switching states
-    """
+    """The TrafficLight class represents a traffic light at a specific node, managing
+    the blocked directions and switching states"""
+
     def __init__(
         self,
         node: int,
@@ -267,11 +282,16 @@ class TrafficLight:
 
         Args:
             node (int): The node where the traffic light is located.
-            up_node (int | None, optional): The node in the upward direction. Defaults to None.
-            down_node (int | None, optional): The node in the downward direction. Defaults to None.
-            left_node (int | None, optional): The node in the left direction. Defaults to None.
-            right_node (int | None, optional): The node in the right direction. Defaults to None.
-            blocked_direction (Direction, optional): The direction currently blocked by the traffic light. Defaults to Direction.UP.
+            up_node (int | None, optional): The node in the upward direction.
+                Defaults to None.
+            down_node (int | None, optional): The node in the downward direction.
+                Defaults to None.
+            left_node (int | None, optional): The node in the left direction.
+                Defaults to None.
+            right_node (int | None, optional): The node in the right direction.
+                Defaults to None.
+            blocked_direction (Direction, optional): The direction currently blocked by
+                the traffic light. Defaults to Direction.UP.
         """
         self._node = node
         self._up_node = up_node
@@ -284,7 +304,11 @@ class TrafficLight:
         return f"{self.__class__.__name__}({self._node}, {self._blocked_direction})"
 
     def get_blocked_road_keys(self) -> list[tuple[int, int]]:
-        """Returns a list of road keys blocked by the traffic light.
+        """Returns a list of road keys blocked by the traffic light. Traffic light
+        blocks all roads in the same AND opposite direction as the blocked direction,
+        which means that e.g. direction UP blocks both roads UP and DOWN, and LEFT
+        blocks both roads LEFT and RIGHT.
+
 
         Returns:
             list[tuple[int, int]]:  A list of blocked road keys.
@@ -303,8 +327,7 @@ class TrafficLight:
         return road_keys
 
     def switch_lights(self):
-        """Switches the traffic light to block the next direction.
-        """
+        """Switches the traffic light to block the next direction."""
         self._blocked_direction = Direction((self._blocked_direction + 1) % 4)
 
 
@@ -312,7 +335,8 @@ def get_map(filename="sample_map.txt") -> np.ndarray:
     """Generates an array representation of a sample map from a text file.
 
     Args:
-        filename (str, optional): The name of the file containing the map. Defaults to "sample_map.txt".
+        filename (str, optional): The name of the file containing the map. Defaults to
+            "sample_map.txt".
 
     Returns:
         np.ndarray: A numpy array representing the map.
@@ -332,7 +356,8 @@ def get_node_indices(map_array) -> dict[int, tuple[int, int]]:
         map_array (np.ndarray): A numpy array representing the map.
 
     Returns:
-        dict[int, tuple[int, int]]: A dictionary where keys are node IDs and values are tuples representing the (x, y) coordinates of the nodes.
+        dict[int, tuple[int, int]]: A dictionary where keys are node IDs and values are
+            tuples representing the (x, y) coordinates of the nodes.
     """
     node_indices = {}
     id = 0
@@ -351,7 +376,8 @@ def create_adjacency_matrix(
 
     Args:
         content (np.ndarray): A numpy array representing the map.
-        node_indices (dict[int, tuple[int, int]]): A dictionary where keys are node IDs and values are tuples representing the (x, y) coordinates of the nodes.
+        node_indices (dict[int, tuple[int, int]]): A dictionary where keys are node IDs
+            and values are tuples representing the (x, y) coordinates of the nodes.
 
     Returns:
         np.ndarray: The adjacency matrix of the map.
@@ -391,11 +417,14 @@ def create_edges(
     """Creates edges between nodes based on the adjacency matrix.
 
     Args:
-        node_indices (dict[int, tuple[int, int]]): A dictionary where keys are node IDs and values are tuples representing the (x, y) coordinates of the nodes.
+        node_indices (dict[int, tuple[int, int]]): A dictionary where keys are node IDs
+            and values are tuples representing the (x, y) coordinates of the nodes.
         adjacency_matrix (np.ndarray): The adjacency matrix of the map.
 
     Returns:
-        dict[tuple[int, int], Direction]: A dictionary where keys are tuples representing edges between nodes and values are Direction enums indicating the direction of the edge.
+        dict[tuple[int, int], Direction]: A dictionary where keys are tuples
+            representing edges between nodes and values are Direction enums indicating
+            the direction of the edge.
     """
     edges = {}
     for x_id, (x_x, x_y) in node_indices.items():
@@ -426,12 +455,16 @@ def create_roads(
     """Creates roads based on edges and the adjacency matrix.
 
     Args:
-        edges (dict[tuple[int, int], Direction]): A dictionary where keys are tuples representing edges between nodes and values are Direction enums indicating the direction of the edge.
+        edges (dict[tuple[int, int], Direction]): A dictionary where keys are tuples
+            representing edges between nodes and values are Direction enums indicating
+            the direction of the edge.
         adjacency_matrix (np.ndarray): The adjacency matrix of the map.
-        node_indices (dict[int, tuple[int, int]]):  A dictionary where keys are node IDs and values are tuples representing the (x, y) coordinates of the nodes.
+        node_indices (dict[int, tuple[int, int]]):  A dictionary where keys are node IDs
+            and values are tuples representing the (x, y) coordinates of the nodes.
 
     Returns:
-        dict[tuple[int, int], Road]: A dictionary where keys are tuples representing edges between nodes and values are Road objects.
+        dict[tuple[int, int], Road]: A dictionary where keys are tuples representing
+            edges between nodes and values are Road objects.
     """
     roads = {}
     for back_node, front_node in edges.keys():
@@ -473,15 +506,20 @@ def create_traffic_lights(
     adjacency_matrix: np.ndarray,
     percentage_of_nodes: float = 0.4,
 ) -> dict[int, TrafficLight]:
-    """Creates traffic lights for nodes based on the adjacency matrix and a specified percentage of nodes.
+    """Creates traffic lights for nodes based on the adjacency matrix and a specified
+    percentage of nodes.
 
     Args:
-        edges (dict[tuple[int, int], Direction]): A dictionary where keys are tuples representing edges between nodes and values are Direction enums indicating the direction of the edge.
+        edges (dict[tuple[int, int], Direction]): A dictionary where keys are tuples
+            representing edges between nodes and values are Direction enums indicating
+            the direction of the edge.
         adjacency_matrix (np.ndarray): The adjacency matrix of the map.
-        percentage_of_nodes (float, optional): The percentage of nodes to have traffic lights. Defaults to 0.4.
+        percentage_of_nodes (float, optional): The percentage of nodes to have traffic
+            lights. Defaults to 0.4.
 
     Returns:
-        dict[int, TrafficLight]: A dictionary where keys are node IDs and values are TrafficLight objects.
+        dict[int, TrafficLight]: A dictionary where keys are node IDs and values are
+            TrafficLight objects.
     """
     node_connections = {}
     for node_id in range(adjacency_matrix.shape[0]):
@@ -532,14 +570,18 @@ def create_traffic_lights(
 
 
 class MapState:
-    """The MapState class manages the state of the map, including roads, cars, and traffic lights.
+    """The MapState class manages the state of the map, including roads, cars, and
+    traffic lights. It defines the actions that can be taken in the environment and the
+    rules of the environment.
     """
+
     def __init__(self, random_seed: int, traffic_light_percentage: float = 0.4):
         """Initializes the MapState instance.
 
         Args:
             random_seed (int): The seed used for random number generation.
-            traffic_light_percentage (float, optional): The percentage of nodes with traffic lights. Defaults to 0.4.
+            traffic_light_percentage (float, optional): The percentage of nodes with
+                traffic lights. Defaults to 0.4.
         """
         self._random_seed = random_seed
         self._map_array = get_map()
@@ -554,15 +596,15 @@ class MapState:
         self._traffic_lights = create_traffic_lights(
             self._edges, self._adjacency_matrix, traffic_light_percentage
         )
-        self._cars = {}
-        self._points = {}
+        self._cars: dict[int, tuple[tuple[int, int], int]] = {}
+        self._points: dict[int, tuple[int, int]] = {}
 
-    def _add_car(self, road_key: tuple[int, int], car_id):
+    def _add_car(self, road_key: tuple[int, int], car_id: int):
         """Adds a car to the map at a specified road.
 
         Args:
             road_key (tuple[int, int]): The key of the road where the car is added.
-            car_id (_type_): The unique identifier of the car.
+            car_id (int): The unique identifier of the car.
         """
         road = self._roads[road_key]
         pos_idx = np.random.randint(road.length)
@@ -579,7 +621,8 @@ class MapState:
             ValueError: If the number of cars is greater than the number of roads.
 
         Returns:
-            dict[int, tuple[tuple[int, int], int]]: A dictionary of car IDs and their positions.
+            dict[int, tuple[tuple[int, int], int]]: A dictionary of car IDs and
+                their positions.
         """
         # TODO: breaks if number of cars is greater than number of roads
         if n > len(self._roads):
@@ -601,7 +644,8 @@ class MapState:
             n (int): The number of points to add.
 
         Returns:
-            dict[int, tuple[tuple[int, int]]]: A dictionary of point IDs and their positions.
+            dict[int, tuple[tuple[int, int]]]: A dictionary of point IDs and their
+                positions.
         """
         road_tile_positions = self.get_road_tiles_map_positions()
         road_tile_idxs = np.random.choice(
@@ -624,7 +668,8 @@ class MapState:
             actions (list[tuple[int, Action, bool]]): A list of actions to perform.
 
         Returns:
-            list[tuple[int, bool, tuple[int, int], int]]: A list of results for each car.
+            list[tuple[int, bool, tuple[int, int], int]]: A list of results for each
+                car.
         """
         road_actions = {}
         node_actions = {}
@@ -722,7 +767,7 @@ class MapState:
 
             next_road = self.get_road(next_road_key) if next_road_key else None
 
-            if next_road and next_road.front_is_empty():
+            if next_road and next_road.is_front_empty():
                 next_pos = 0
                 results.append(
                     self._move_car(car_id, next_road, next_pos, collect_point)
@@ -769,8 +814,7 @@ class MapState:
                 break
 
     def _switch_traffic_lights(self):
-        """Switches the state of all traffic lights on the map.
-        """
+        """Switches the state of all traffic lights on the map."""
         for traffic_light in self._traffic_lights.values():
             traffic_light.switch_lights()
 
@@ -787,7 +831,7 @@ class MapState:
                     road_tiles.append((x, y))
         return road_tiles
 
-    def get_adjacency_matrix_size(self):
+    def get_adjacency_matrix_size(self) -> int:
         """Returns the size of the adjacency matrix.
 
         Returns:
@@ -795,7 +839,7 @@ class MapState:
         """
         return self._adjacency_matrix.shape[0]
 
-    def get_adjacency_matrix(self):
+    def get_adjacency_matrix(self) -> np.ndarray:
         """Returns the adjacency matrix.
 
         Returns:
@@ -803,15 +847,15 @@ class MapState:
         """
         return self._adjacency_matrix
 
-    def get_map_array(self):
+    def get_map_array(self) -> np.ndarray:
         """Returns the map array.
 
         Returns:
-            _type_: The map array.
+            np.ndarray: The map array.
         """
         return self._map_array
 
-    def get_roads(self):
+    def get_roads(self) -> dict[tuple[int, int], Road]:
         """Returns the roads on the map.
 
         Returns:
@@ -819,18 +863,18 @@ class MapState:
         """
         return self._roads
 
-    def get_road(self, key: tuple[int, int]):
+    def get_road(self, key: tuple[int, int]) -> Road | None:
         """Returns a specific road based on its key.
 
         Args:
             key (tuple[int, int]): The key of the road.
 
         Returns:
-            Road: The road corresponding to the key.
+            Road | None: The road corresponding to the key, or None if there is no road.
         """
-        return self._roads[key]
+        return self._roads.get(key, None)
 
-    def get_traffic_lights(self):
+    def get_traffic_lights(self) -> dict[int, TrafficLight]:
         """Returns the traffic lights on the map.
 
         Returns:
@@ -838,18 +882,19 @@ class MapState:
         """
         return self._traffic_lights
 
-    def get_traffic_light(self, node_id: int):
+    def get_traffic_light(self, node_id: int) -> TrafficLight | None:
         """Returns a specific traffic light based on its node ID.
 
         Args:
             node_id (int): The ID of the node.
 
         Returns:
-            TrafficLight | None: The traffic light corresponding to the node ID, or None if there is no traffic light.
+            TrafficLight | None: The traffic light corresponding to the node ID, or
+                None if there is no traffic light.
         """
         return self._traffic_lights.get(node_id, None)
 
-    def get_cars(self):
+    def get_cars(self) -> dict[int, tuple[tuple[int, int], int]]:
         """Returns the cars on the map.
 
         Returns:
@@ -857,15 +902,15 @@ class MapState:
         """
         return self._cars
 
-    def get_points(self):
+    def get_points(self) -> dict[int, tuple[int, int]]:
         """Returns the points on the map.
 
         Returns:
-            dict[int, tuple[tuple[int, int]]]: A dictionary of points and their positions.
+            dict[int, tuple[int, int]]: A dictionary of points and their positions.
         """
         return self._points
 
-    def get_number_of_node_connections(self, node_id: int):
+    def get_number_of_node_connections(self, node_id: int) -> int:
         """Returns the number of connections for a specific node.
 
         Args:
@@ -876,7 +921,7 @@ class MapState:
         """
         return np.count_nonzero(~np.isnan(self._adjacency_matrix[node_id]))
 
-    def get_node_map_position(self, node_id: int):
+    def get_node_map_position(self, node_id: int) -> tuple[int, int]:
         """Returns the map position of a specific node.
 
         Args:
@@ -887,7 +932,9 @@ class MapState:
         """
         return self._node_indices[node_id]
 
-    def get_road_position_map_position(self, road_key: tuple[int, int], road_pos: int):
+    def get_road_position_map_position(
+        self, road_key: tuple[int, int], road_pos: int
+    ) -> tuple[int, int]:
         """Returns the map position for a specific road position.
 
         Args:

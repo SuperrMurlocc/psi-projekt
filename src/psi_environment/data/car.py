@@ -8,13 +8,19 @@ from psi_environment.data.action import Action
 
 
 class Car:
-    """The Car class serves as an abstract base class for vehicles in the simulation. It defines the basic properties and methods that all cars should have.
+    """The Car class serves as an abstract base class for vehicles in the simulation. 
+    It defines the basic properties and methods that all cars should have.
+
+    Note that it does not directly represent a physical vehicle in the simulation. 
+    The simulation has correct physical representations of cars, while the Car class 
+    should only be treated as a view of the simulation.
     """
     def __init__(self, road_key: tuple[int, int], road_pos: int, car_id: int):
         """Initializes the Car instance.
 
         Args:
-            road_key (tuple[int, int]): A tuple representing the road on which the car is currently located.
+            road_key (tuple[int, int]): A tuple representing the key of the road on 
+                which the car is currently located.
             road_pos (int): An integer representing the car's position on the road.
             car_id (int): An integer representing the unique identifier of the car.
         """
@@ -24,7 +30,8 @@ class Car:
 
     @abstractmethod
     def get_action(self, map_state: MapState) -> Action:
-        """Abstract method to determine the car's next action.
+        """Abstract method to determine the car's next action based on the current 
+        state of the map.
 
         Args:
             map_state (MapState): The current state of the map.
@@ -34,11 +41,11 @@ class Car:
         """
         pass
 
-    def get_car_id(self):
+    def get_car_id(self) -> int:
         """Returns the car's unique identifier.
 
         Returns:
-            _type_: The unique identifier of the car.
+            int: The unique identifier of the car.
         """
         return self._car_id
 
@@ -47,7 +54,8 @@ class Car:
 
 
 class DummyAgent(Car):
-    """The DummyAgent class is a subclass of Car that implements a simple agent which makes random decisions based on a given random seed.
+    """The DummyAgent class is a subclass of Car that implements a simple agent which 
+    makes random decisions based on a given random seed.
     """
     def __init__(
         self, road_key: tuple[int, int], road_pos: int, random_seed: int, car_id: int
@@ -55,8 +63,9 @@ class DummyAgent(Car):
         """Initializes the DummyAgent instance.
 
         Args:
-            road_key (tuple[int, int]): The road on which the car is currently located.
-            road_pos (int): The car's position on the road.
+            road_key (tuple[int, int]): A tuple representing the key of the road on 
+                which the car is currently located.
+            road_pos (int): An integer representing the car's position on the road.
             random_seed (int): The seed used for random number generation.
             car_id (int): The unique identifier of the car.
         """
