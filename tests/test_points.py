@@ -16,13 +16,13 @@ class TestPoints(unittest.TestCase):
 
         self.assertEqual(n_points, len(map._map_state._points))
     
-    def test_bot_not_collect_points_100000_map(self):
+    def test_bot_not_collect_points_10000_map(self):
         """
         Tests whether bot collects points using Map.step() for more points and iterations
         """
         n_points = 100
-        map = Map(n_points=n_points, random_seed=23, agent_type=None)
-        for _ in range(100_000):
+        map = Map(n_points=n_points, n_bots=50, random_seed=23, agent_type=None)
+        for _ in range(10_000):
             map.step()
 
         self.assertEqual(n_points, len(map._map_state._points))
