@@ -46,8 +46,17 @@ class Game:
         self._clock = pygame.time.Clock()
         self._ticks_per_second = ticks_per_second
         self._running = True
+        self._agents = self._map._agents
         self._init_images()
-        # no crossroad tile yet
+        self._crossroads_positions = dict()
+        cros_id = 0
+        for idy, y in enumerate(self._crossroads):
+            for idx, x in enumerate(y):
+                if x == "x":
+                    self._crossroads_positions[cros_id] = [idx * TILE_SIZE, idy * TILE_SIZE]
+                    cros_id += 1
+
+
 
     def _init_images(self):
         # road tiles
@@ -115,7 +124,7 @@ class Game:
             self.star = pygame.image.load(str(star_path))
 
         self.colored_cars = {}
-        self.create_colored_cars([1, 2, 3, 6])
+        self.create_colored_cars(self._agents.keys())
 
         self.env_tiles = [
             self.grass_flower_yellow,
@@ -125,7 +134,7 @@ class Game:
             self.grass_no_stalk,
             self.brick_tile,
         ]
-
+                    
         self.map_seed = self._map._random_seed
 
     def __del__(self):
@@ -155,7 +164,7 @@ class Game:
         )
         return blended_color
 
-    def change_car_color(self, image, new_color, blend_factor):
+    def change_color(self, image, new_color, blend_factor):
         new_image = image.copy()
         new_image.lock()
         width, height = new_image.get_size()
@@ -178,14 +187,14 @@ class Game:
         for car_id in agent_car_list:
             new_color = PRE_COLOR[car_id % len(PRE_COLOR)]
             self.colored_cars[car_id] = {
-                Direction.UP: self.change_car_color(self.car_up, new_color, BLEND_RATE),
-                Direction.DOWN: self.change_car_color(
+                Direction.UP: self.change_color(self.car_up, new_color, BLEND_RATE),
+                Direction.DOWN: self.change_color(
                     self.car_down, new_color, BLEND_RATE
                 ),
-                Direction.LEFT: self.change_car_color(
+                Direction.LEFT: self.change_color(
                     self.car_left, new_color, BLEND_RATE
                 ),
-                Direction.RIGHT: self.change_car_color(
+                Direction.RIGHT: self.change_color(
                     self.car_right, new_color, BLEND_RATE
                 ),
             }
@@ -232,6 +241,71 @@ class Game:
                     ]
                     tile = pygame.transform.scale(tile, (TILE_SIZE, TILE_SIZE))
                     self._screen.blit(tile, [idx * TILE_SIZE, idy * TILE_SIZE])
+
+        cross_lights = self._map._map_state.get_traffic_lights()
+        cross_lights = cross_lights.items()
+
+        for cross, light in cross_lights:
+            cross_pos = self._crossroads_positions[cross]
+            if light._blocked_direction == Direction.UP or light._blocked_direction == Direction.DOWN:
+                if light._up_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (255, 0, 0),
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - 25),
+                        10,
+                    )
+                if light._down_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (255, 0, 0),
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + 25),
+                        10,
+                    )
+                if light._left_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (0, 255, 0),
+                        (cross_pos[0] + TILE_SIZE // 2 - 25, cross_pos[1] + TILE_SIZE // 2),
+                        10,
+                    )
+                if light._right_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (0, 255, 0),
+                        (cross_pos[0] + TILE_SIZE // 2 + 25, cross_pos[1] + TILE_SIZE // 2),
+                        10,
+                    )
+            if light._blocked_direction == Direction.LEFT or light._blocked_direction == Direction.RIGHT:
+                if light._up_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (0, 255, 0),
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - 25),
+                        10,
+                    )
+                if light._down_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (0, 255, 0),
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + 25),
+                        10,
+                    )
+                if light._left_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (255, 0, 0),
+                        (cross_pos[0] + TILE_SIZE // 2 - 25, cross_pos[1] + TILE_SIZE // 2),
+                        10,
+                    )
+                if light._right_node:
+                    pygame.draw.circle(
+                        self._screen,
+                        (255, 0, 0),
+                        (cross_pos[0] + TILE_SIZE // 2 + 25, cross_pos[1] + TILE_SIZE // 2),
+                        10,
+                    )
+
         # TODO Render points for all cars dict[int, tuple[int, int]] key is an index of agent
         for point in self._map._map_state._points[1]:
             x, y = point[0], point[1]
