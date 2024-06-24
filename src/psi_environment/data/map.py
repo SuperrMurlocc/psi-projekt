@@ -9,6 +9,10 @@ from psi_environment.data.point import Point
 
 
 class Map:
+    """The Map class manages the initialization of the map state and the agents. It 
+    also provides higher level methods for interacting with the map state and agents, 
+    like handling game steps and checking if the game is over.
+    """
     def __init__(
         self,
         random_seed: int,
@@ -18,6 +22,20 @@ class Map:
         traffic_lights_percentage: float = 0.4,
         traffic_lights_length: int = 10,
     ):
+        """Initializes the Map instance.
+
+        Args:
+            random_seed (int): The seed used for random number generation.
+            n_bots (int, optional): The number of bots to add to the map. Defaults to 3.
+            agent_type (Type[Car] | None, optional): The type of the agent car. 
+                Defaults to None.
+            n_points (int, optional): The number of points to be collected on the map. 
+                Defaults to 3.
+            traffic_lights_percentage (float, optional): The percentage of nodes with 
+                traffic lights. Defaults to 0.4.
+            traffic_lights_length (int, optional): The interval length for switching 
+                traffic lights. Defaults to 10.
+        """
         self.n_points = n_points
         self._map_state = MapState(random_seed, traffic_lights_percentage)
         self._cars: dict[int, Car] = {}
@@ -45,6 +63,11 @@ class Map:
         self._step = 0
 
     def step(self):
+        """Advances the simulation by one step.
+        This method retrieves actions for each car and sends it to the map state, 
+        updates the cars position based on the map state response, and switches traffic
+        lights at specified intervals.
+        """
         actions = [
             (
                 car_id,
@@ -67,7 +90,17 @@ class Map:
             self._map_state._switch_traffic_lights()
 
     def is_game_over(self) -> bool:
+        """Checks if the game is over.
+
+        Returns:
+            bool: True if there are no more points to collect, False otherwise.
+        """
         return len(self._map_state.get_points()) == 0
 
     def get_map_state(self) -> MapState:
+        """Returns the reference to the map state.
+
+        Returns:
+            MapState: The reference to the map state.
+        """
         return self._map_state
