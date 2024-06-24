@@ -74,7 +74,6 @@ class Map:
             )
             for car_id, car in self._cars.items()
         ]
-        actions.sort(key=lambda x: x[1])
         action_results = self._map_state.move_cars(actions)
 
         for car_id, car_moved, car_road_key, car_road_pos in action_results:
