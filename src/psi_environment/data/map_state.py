@@ -4,7 +4,6 @@ from enum import IntEnum
 import numpy as np
 
 from psi_environment.data.action import Action
-from psi_environment.data.point import Point
 
 NODE_CHARACTER = "x"
 EMPTY_CHARACTER = "#"
@@ -598,7 +597,7 @@ class MapState:
             self._edges, self._adjacency_matrix, traffic_light_percentage
         )
         self._cars: dict[int, tuple[tuple[int, int], int]] = {}
-        self._points: dict[int, list[Point]] = {}
+        self._points: dict[int, list[tuple[int, int]]] = {}
 
     def _add_car(
         self, car_id: int, road_key: tuple[int, int], road_pos: int | None = None
@@ -641,7 +640,7 @@ class MapState:
 
         return self._cars
 
-    def add_points(self, n: int, agents_idxs: list[int]) -> dict[int, list[Point]]:
+    def add_points(self, n: int, agents_idxs: list[int]) -> dict[int, list[tuple[int, int]]]:
         """Adds a specified number of points to the map.
 
         Args:
@@ -657,14 +656,14 @@ class MapState:
             len(road_tile_positions), size=n, replace=False
         )
 
-        points: list[Point] = []
+        points: list[tuple[int, int]] = []
 
         for road_tile_idx in road_tile_idxs:
             point_position = road_tile_positions[road_tile_idx]
-            points.append(Point(point_position))
+            points.append(point_position)
 
         for agent_idx in agents_idxs:
-            self._points[agent_idx] = [point.copy() for point in points]
+            self._points[agent_idx] = list(points)
 
         return self._points
 
@@ -818,7 +817,7 @@ class MapState:
         
         agent_points = self._points[car_id]
         for agent_point in agent_points:
-            if agent_point.map_position == car_map_position:
+            if agent_point == car_map_position:
                 agent_points.pop(agent_point)
                 break
 
@@ -911,7 +910,7 @@ class MapState:
         """
         return self._cars
 
-    def get_points(self) -> dict[int, tuple[int, int]]:
+    def get_points(self) -> dict[int, list[tuple[int, int]]]:
         """Returns the points on the map.
 
         Returns:

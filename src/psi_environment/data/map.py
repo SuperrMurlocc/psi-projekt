@@ -5,7 +5,6 @@ import numpy as np
 from psi_environment.data.car import Car, DummyAgent
 from psi_environment.data.map_state import MapState, Road
 from psi_environment.data.action import Action
-from psi_environment.data.point import Point
 
 
 class Map:

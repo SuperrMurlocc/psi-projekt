@@ -226,8 +226,8 @@ class Game:
                         tile, (TILE_SIZE, TILE_SIZE)
                     )
                     self._screen.blit(tile, [idx * TILE_SIZE, idy * TILE_SIZE])
-
-        for point in self._map._map_state._points.values():
+        # TODO Render points for all cars dict[int, tuple[int, int]] key is an index of agent
+        for point in self._map._map_state._points[1]:
             x, y = point[0], point[1]
             self._screen.blit(
                 pygame.transform.scale(self.star, (TILE_SIZE, TILE_SIZE)),

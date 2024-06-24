@@ -184,14 +184,27 @@ class EnvironmentAPI:
                 traffic_matrix[i, j] = self.get_specific_traffic(i, j)
         return traffic_matrix
 
-    def get_points_positions(self) -> list[tuple[int, int]]:
-        """Returns a list of the positions of the points on the map.
+    def get_points_positions_for_all_cars(self) -> dict[int, list[tuple[int, int]]]:
+        """Returns a list of the positions of the points on the map for all cars.
 
         Returns:
-            list[tuple[int, int]]: A list of the positions of the points on the map.
+            dict[int, list[tuple[int, int]]]: A list of the positions of the points on the map.
         """
         points = self._map_state.get_points()
         return list(points.values())
+    
+    def get_points_positions_for_specific_car(self, car_id: int) -> list[tuple[int, int]] | None:
+        """Returns a list of the positions of the points on the map for the specific 
+        car.
+
+        Args:
+            car_id (int): Car id
+        Returns:
+            list[tuple[int, int]] | None: A list of the positions of the points on the map or None
+                if the car doesn't collect points.
+        """
+        points = self._map_state.get_points().get(car_id)
+        return points
 
     def get_cars_positions(
         self, car_id_to_ignore: int | None = None
