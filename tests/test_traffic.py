@@ -334,6 +334,42 @@ def test_two_cars_both_turns_left_deadlock(car1_road, car2_road, car1_expected_r
 
 
 
+@pytest.mark.parametrize("car1_road,car2_road,car3_road,car1_expected_road,car2_expected_road,car3_expected_road",
+[
+    ((6, 7), (1, 7), (8, 7), (7, 8), (7, 13), (7, 13)),
+    ((13, 7), (6, 7), (1, 7), (7, 1), (7, 8), (7, 8))
+])
+def test_tree_cars_c1_forward_c2_forward_c3_left(car1_road, car2_road, car3_road,
+                                                 car1_expected_road, car2_expected_road, car3_expected_road):
+    actions = [(1, Action.FORWARD, False),
+               (2, Action.FORWARD, False),
+               (3, Action.LEFT, False)]
+    map_state = MapState(0, traffic_light_percentage=0)
+    map_state._cars = {
+        1: (car1_road, return_road_end(map_state, car1_road)),
+        2: (car2_road, return_road_end(map_state, car2_road)),
+        3: (car3_road, return_road_end(map_state, car3_road)),
+    }
+
+    map_state.move_cars(actions)
+    expected_result = {1: (car1_expected_road, 0),
+                       2: (car2_road, return_road_end(map_state, car2_road)),
+                       3: (car3_road, return_road_end(map_state, car3_road))}
+    assert map_state._cars == expected_result
+
+    map_state.move_cars(actions)
+    expected_result = {1: (car1_expected_road, 1),
+                       2: (car2_expected_road, 0),
+                       3: (car3_road, return_road_end(map_state, car3_road))}
+    assert map_state._cars == expected_result
+
+    map_state.move_cars(actions)
+    expected_result = {1: (car1_expected_road, 2),
+                       2: (car2_expected_road, 1),
+                       3: (car3_expected_road, 0)}
+    assert map_state._cars == expected_result
+
+
 
 if __name__ == '__main__':
     unittest.main()
