@@ -41,7 +41,7 @@ class Map:
                 car = DummyAgent(road_key, road_pos_idx, self._random_seed, car_id)
             self._cars[car_id] = car
 
-        self._map_state.add_points(n_points)
+        self._map_state.add_points(n_points, self._agents.keys())
         self._step = 0
 
     def step(self):

@@ -4,6 +4,7 @@ from enum import IntEnum
 import numpy as np
 
 from psi_environment.data.action import Action
+from psi_environment.data.point import Point
 
 NODE_CHARACTER = "x"
 EMPTY_CHARACTER = "#"
@@ -371,7 +372,7 @@ class MapState:
             self._edges, self._adjacency_matrix, traffic_light_percentage
         )
         self._cars = {}
-        self._points = {}
+        self._points: dict[int, list[Point]] = {}
 
     def _add_car(self, road_key: tuple[int, int], car_id) -> int:
         road = self._roads[road_key]
@@ -393,16 +394,20 @@ class MapState:
 
         return self._cars
 
-    def add_points(self, n: int) -> dict[int, tuple[tuple[int, int]]]:
+    def add_points(self, n: int, agents_idxs: list[int]) -> dict[int, list[Point]]:
         road_tile_positions = self.get_road_tiles_map_positions()
         road_tile_idxs = np.random.choice(
             len(road_tile_positions), size=n, replace=False
         )
 
-        for i, road_tile_idx in enumerate(road_tile_idxs):
-            point_id = i + 1
+        points: list[Point] = []
+
+        for road_tile_idx in road_tile_idxs:
             point_position = road_tile_positions[road_tile_idx]
-            self._points[point_id] = point_position
+            points.append(Point(point_position))
+
+        for agent_idx in agents_idxs:
+            self._points[agent_idx] = [point.copy() for point in points]
 
         return self._points
 
@@ -524,14 +529,19 @@ class MapState:
         road[road_pos] = car_id
         self._cars[car_id] = (road.get_key(), road_pos)
         if collect_point:
-            self._update_collected_points(car_road_key, car_road_pos)
+            self._update_collected_points(car_road_key, car_road_pos, car_id)
         return car_id, True, road.get_key(), road_pos
 
-    def _update_collected_points(self, road_key: tuple[int, int], road_pos: int):
+    def _update_collected_points(self, road_key: tuple[int, int], road_pos: int, car_id: int):
         car_map_position = self.get_road_position_map_position(road_key, road_pos)
-        for id, point_position in self._points.items():
-            if point_position == car_map_position:
-                self._points.pop(id)
+
+        if car_id not in self._points.keys():
+            return
+        
+        agent_points = self._points[car_id]
+        for agent_point in agent_points:
+            if agent_point.map_position == car_map_position:
+                agent_points.pop(agent_point)
                 break
 
     def _switch_traffic_lights(self):
