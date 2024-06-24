@@ -11,7 +11,7 @@ class MyCar(Car):
 
 if __name__ == "__main__":
     env = Environment(
-        agent_types=[MyCar],
+        agent_type=MyCar,
         ticks_per_second=10,
         n_bots=50,
         n_points=10,
