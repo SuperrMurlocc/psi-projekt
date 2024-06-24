@@ -670,12 +670,12 @@ class MapState:
         return self._points
 
     def move_cars(
-        self, actions: list[tuple[int, Action, bool]]
+        self, actions: list[tuple[int, Action]]
     ) -> list[tuple[int, tuple[int, int], int]]:
         """Moves cars based on the given actions.
 
         Args:
-            actions (list[tuple[int, Action, bool]]): A list of actions to perform.
+            actions (list[tuple[int, Action]]): A list of actions to perform.
 
         Returns:
             list[tuple[int, tuple[int, int], int]]: A list of results of the actions. It
@@ -687,34 +687,34 @@ class MapState:
         results = []
 
         actions.sort(key=lambda x: x[1])  # sort by action
-        for car_id, action, collect_point in actions:
+        for car_id, action in actions:
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
             current_road = self.get_road(car_road_key)
 
             if current_road.is_position_road_end(car_road_pos):
-                node_actions[car_id] = (car_id, action, collect_point)
+                node_actions[car_id] = action
             else:
-                road_actions[car_id] = (car_id, action, collect_point)
+                road_actions[car_id] = action
 
         move_requests = []
 
-        for car_id, action, collect_point in road_actions.values():
+        for car_id, action in road_actions.items():
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
             current_road = self.get_road(car_road_key)
 
             if action == Action.FORWARD:
                 next_pos = car_road_pos + 1
-                move_requests.append((car_id, current_road, next_pos, collect_point))
+                move_requests.append((car_id, current_road, next_pos))
 
             elif action == Action.BACK:
                 inv_road_key = current_road.get_backward_road_key()
                 next_road = self.get_road(inv_road_key)
                 inv_pos = current_road.get_inverted_position(car_road_pos)
-                move_requests.append((car_id, next_road, inv_pos, collect_point))
+                move_requests.append((car_id, next_road, inv_pos))
 
-        for car_id, action, collect_point in node_actions.values():
+        for car_id, action in node_actions.items():
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
             current_road = self.get_road(car_road_key)
@@ -752,7 +752,7 @@ class MapState:
                 if front_road is not None and front_road_key not in blocked_road_keys:
                     front_car = front_road.get_car_on_last_position()
                     if front_car in node_actions:
-                        front_car_action = node_actions[front_car][1]
+                        front_car_action = node_actions[front_car]
                         # always give way to car driving forward
                         if front_car_action == Action.FORWARD:
                             continue
@@ -767,25 +767,24 @@ class MapState:
             if next_road is None:
                 continue
 
-            move_requests.append((car_id, next_road, 0, collect_point))
+            move_requests.append((car_id, next_road, 0))
 
-        for car_id, road, road_pos, collect_point in move_requests:
+        for car_id, road, road_pos in move_requests:
             car_id, car_moved, car_road_key, car_road_pos = self._move_car(
-                car_id, road, road_pos, collect_point
+                car_id, road, road_pos
             )
             if car_moved:
                 results.append((car_id, car_road_key, car_road_pos))
 
         return results
 
-    def _move_car(self, car_id: int, road: Road, road_pos: int, collect_point: bool):
+    def _move_car(self, car_id: int, road: Road, road_pos: int):
         """Moves a specific car to a new position.
 
         Args:
             car_id (int): The ID of the car.
             road (Road): The road where the car is moved.
             road_pos (int): The new position on the road.
-            collect_point (bool): Whether to collect a point at the new position.
 
         Returns:
             tuple[int, bool, tuple[int, int], int]: The result of the move operation.
@@ -800,8 +799,7 @@ class MapState:
         self._cars[car_id] = (road.get_key(), road_pos)
         current_road = self.get_road(car_road_key)
         current_road[car_road_pos] = 0
-        if collect_point:
-            self._update_collected_points(car_road_key, car_road_pos, car_id)
+        self._update_collected_points(car_road_key, car_road_pos, car_id)
         return car_id, True, road.get_key(), road_pos
 
     def _update_collected_points(
@@ -814,10 +812,10 @@ class MapState:
             road_pos (int): The position of the car on the road.
             car_id (int): Id of a car
         """
-        car_map_position = self.get_road_position_map_position(road_key, road_pos)
-
         if car_id not in self._points.keys():
             return
+
+        car_map_position = self.get_road_position_map_position(road_key, road_pos)
 
         agent_points = self._points[car_id]
         for agent_point in agent_points:

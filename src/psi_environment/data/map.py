@@ -40,7 +40,7 @@ class Map:
         self._random_seed = random_seed
         self._traffic_lights_length = traffic_lights_length
 
-        n_agents = len(agent_types) if agent_types else 0
+        n_agents = len(agent_types) if agent_types is not None else 0
 
         cars_data = self._map_state.add_cars(n_bots + n_agents)
 
@@ -69,7 +69,6 @@ class Map:
             (
                 car_id,
                 car.get_action(self._map_state),
-                car_id in self._agents,
             )
             for car_id, car in self._cars.items()
         ]
