@@ -219,7 +219,6 @@ def test_two_cars_collisions_first_turns_left_second_forward(car1_road, car2_roa
                              ((8, 7), (6, 7), (7, 1), (7, 13)),
                              ((8, 7), (13, 7), (7, 1), (7, 8)),
                          ])
-
 def test_two_cars_both_turn_right(car1_road, car2_road, car1_expected_road, car2_expected_road):
     actions = [(1, Action.RIGHT, False),
                (2, Action.RIGHT, False)]
@@ -237,32 +236,14 @@ def test_two_cars_both_turn_right(car1_road, car2_road, car1_expected_road, car2
 
 
 
-
-
-
-
 @pytest.mark.parametrize("car1_road,car2_road,car1_expected_road,car2_expected_road",
                          [
                              ((1, 7), (8, 7), (7, 8), (7, 13)),
-                             #((1, 7), (13, 7), (7, 8), (7, 6)), - undefinded
-
-                             #((1, 7), (6, 7), (7, 8), (7, 1)) - opposite direction,
-
-                             # ((6, 7), (13, 7), (7, 1), (7, 6)), - opposite direction,
-                             # ((6, 7), (8, 7), (7, 1), (7, 13)), - undefined
                              ((6, 7), (1, 7), (7, 1), (7, 8)),
-
-                             #((13, 7), (8, 7), (7, 6), (7, 13)), - opposite
-                             #((13, 7), (1, 7), (7, 6), (7, 8)), - undefined
                              ((13, 7), (6, 7), (7, 6), (7, 1)),
-
-
-                             #((8, 7), (1, 7), (7, 13), (7, 8)), - opposite
-                             #((8, 7), (6, 7), (7, 13), (7, 1)), - undefined
                              ((8, 7), (13, 7), (7, 13), (7, 6)),
                          ])
-
-def test_two_cars_both_turns_left_car1_moves(car1_road, car2_road, car1_expected_road, car2_expected_road):
+def test_two_cars_both_turns_left_car1_moves_first(car1_road, car2_road, car1_expected_road, car2_expected_road):
     actions = [(1, Action.LEFT, False),
                (2, Action.LEFT, False)]
 
@@ -281,6 +262,76 @@ def test_two_cars_both_turns_left_car1_moves(car1_road, car2_road, car1_expected
     expected_result = {1: (car1_expected_road, 1),
                        2: (car2_expected_road, 0)}
     assert map_state._cars == expected_result
+
+
+@pytest.mark.parametrize("car1_road,car2_road,car1_expected_road,car2_expected_road",
+                         [
+                             ((1, 7), (6, 7), (7, 8), (7, 1)),
+                             ((6, 7), (13, 7), (7, 1), (7, 6)),
+                             ((13, 7), (8, 7), (7, 6), (7, 13)),
+                             ((8, 7), (1, 7), (7, 13), (7, 8)),
+                         ])
+def test_two_cars_both_turns_left_car2_moves_first(car1_road, car2_road, car1_expected_road, car2_expected_road):
+    actions = [(1, Action.LEFT, False),
+               (2, Action.LEFT, False)]
+
+    map_state = MapState(0, traffic_light_percentage=0)
+    map_state._cars = {
+        1: (car1_road, return_road_end(map_state, car1_road)),
+        2: (car2_road, return_road_end(map_state, car2_road)),
+    }
+
+    map_state.move_cars(actions)
+    expected_result = {1: (car1_road, return_road_end(map_state, car1_road)),
+                       2: (car2_expected_road, 0)}
+    assert map_state._cars == expected_result
+
+    map_state.move_cars(actions)
+    expected_result = {1: (car1_expected_road, 0),
+                       2: (car2_expected_road, 1)}
+    assert map_state._cars == expected_result
+
+
+@pytest.mark.parametrize("car1_road,car2_road,car1_expected_road,car2_expected_road",
+                         [
+                             ((1, 7), (13, 7), (7, 8), (7, 6)),
+                             ((6, 7), (8, 7), (7, 1), (7, 13)),
+                             ((13, 7), (1, 7), (7, 6), (7, 8)),
+                             ((8, 7), (6, 7), (7, 13), (7, 1))
+                         ])
+def test_two_cars_both_turns_left_deadlock(car1_road, car2_road, car1_expected_road, car2_expected_road):
+    actions = [(1, Action.LEFT, False),
+               (2, Action.LEFT, False)]
+
+    map_state = MapState(0, traffic_light_percentage=0)
+    map_state._cars = {
+        1: (car1_road, return_road_end(map_state, car1_road)),
+        2: (car2_road, return_road_end(map_state, car2_road)),
+    }
+
+    map_state.move_cars(actions)
+
+    possible_result1 = {1: (car1_road, return_road_end(map_state, car1_road)),
+                        2: (car2_expected_road, 0)}
+
+    possible_result2 = {1: (car1_expected_road, 0),
+                        2: (car2_road, return_road_end(map_state, car2_road))}
+
+    assert map_state._cars == possible_result1 or map_state._cars == possible_result2
+
+    if map_state._cars == possible_result1:
+
+        map_state.move_cars(actions)
+        expected_result = {1: (car1_expected_road, 0),
+                           2: (car2_expected_road, 1)}
+        assert map_state._cars == expected_result
+
+    elif map_state._cars == possible_result2:
+        map_state.move_cars(actions)
+        expected_result = {1: (car1_expected_road, 1),
+                           2: (car1_expected_road, 0)}
+        assert map_state._cars == expected_result
+
 
 
 
