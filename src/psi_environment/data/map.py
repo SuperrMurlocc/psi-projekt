@@ -76,8 +76,8 @@ class Map:
 
         for car_id, car_road_key, car_road_pos in action_results:
             car = self._cars[car_id]
-            car.road_key = car_road_key
-            car.road_pos = car_road_pos
+            car._road_key = car_road_key
+            car._road_pos = car_road_pos
 
         self._step += 1
         if self._step % self._traffic_lights_length == 0:

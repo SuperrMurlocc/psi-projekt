@@ -9,21 +9,21 @@ TILE_SIZE = 64
 CAR_SIZE = 32
 
 PRE_COLOR = [
-    (128, 0, 0),   # maroon
-    (139, 0, 0),   # dark red
-    (220, 20, 60), # crimson
-    (255, 99, 71), # tomato
-    (255, 215, 0), # gold
-    (128, 128, 0), # olive
-    (0, 128, 0),   # green
-    (0, 255, 0),   # lime
-    (0, 128, 128), # teal
-    (0, 255, 255), # aqua
-    (0, 0, 128),   # navy
-    (0, 0, 255),   # blue
-    (128, 0, 128), # purple
-    (255, 0, 255), # magenta / fuchsia
-    (255, 105, 180) # hot pink
+    (128, 0, 0),  # maroon
+    (139, 0, 0),  # dark red
+    (220, 20, 60),  # crimson
+    (255, 99, 71),  # tomato
+    (255, 215, 0),  # gold
+    (128, 128, 0),  # olive
+    (0, 128, 0),  # green
+    (0, 255, 0),  # lime
+    (0, 128, 128),  # teal
+    (0, 255, 255),  # aqua
+    (0, 0, 128),  # navy
+    (0, 0, 255),  # blue
+    (128, 0, 128),  # purple
+    (255, 0, 255),  # magenta / fuchsia
+    (255, 105, 180),  # hot pink
 ]
 
 
@@ -32,7 +32,6 @@ class Direction(IntEnum):
     RIGHT = 1
     DOWN = 2
     LEFT = 3
-
 
 
 class Game:
@@ -51,7 +50,7 @@ class Game:
         # no crossroad tile yet
 
     def _init_images(self):
-        #road tiles
+        # road tiles
         with importlib.resources.path(
             "psi_environment.game.resources", "road_vertical1.png"
         ) as road_vert_path:
@@ -64,8 +63,8 @@ class Game:
             "psi_environment.game.resources", "crossroad1.png"
         ) as crossroad_path:
             self.crossroad = pygame.image.load(str(crossroad_path))
-        
-        #env  tiles
+
+        # env  tiles
         with importlib.resources.path(
             "psi_environment.game.resources", "grass_flower_yellow.png"
         ) as grass_flower_yellow_path:
@@ -90,8 +89,8 @@ class Game:
             "psi_environment.game.resources", "brick_tile.png"
         ) as gbrick_tile_path:
             self.brick_tile = pygame.image.load(str(gbrick_tile_path))
-        
-        #car tiles
+
+        # car tiles
         with importlib.resources.path(
             "psi_environment.game.resources", "car_left_white.png"
         ) as car_left_path:
@@ -109,14 +108,14 @@ class Game:
         ) as car_down_path:
             self.car_down = pygame.image.load(str(car_down_path))
 
-        #additional tiles
+        # additional tiles
         with importlib.resources.path(
             "psi_environment.game.resources", "star.png"
         ) as star_path:
             self.star = pygame.image.load(str(star_path))
 
         self.colored_cars = {}
-        self.create_colored_cars([1,2,3,6])
+        self.create_colored_cars([1, 2, 3, 6])
 
         self.env_tiles = [
             self.grass_flower_yellow,
@@ -124,11 +123,10 @@ class Game:
             self.grass_hay,
             self.grass_hay2,
             self.grass_no_stalk,
-            self.brick_tile
+            self.brick_tile,
         ]
-        
+
         self.map_seed = self._map._random_seed
-            
 
     def __del__(self):
         pygame.quit()
@@ -153,7 +151,7 @@ class Game:
             int(color1[0] * (1 - blend_factor) + color2[0] * blend_factor),
             int(color1[1] * (1 - blend_factor) + color2[1] * blend_factor),
             int(color1[2] * (1 - blend_factor) + color2[2] * blend_factor),
-            color1[3]
+            color1[3],
         )
         return blended_color
 
@@ -165,23 +163,31 @@ class Game:
         for x in range(width):
             for y in range(height):
                 pixel_color = new_image.get_at((x, y))
-                
+
                 if pixel_color.a != 0:
-                    blended_color = self.blend_colors(pixel_color, new_color, blend_factor)
+                    blended_color = self.blend_colors(
+                        pixel_color, new_color, blend_factor
+                    )
                     new_image.set_at((x, y), blended_color)
-        
+
         new_image.unlock()
         return new_image
 
     def create_colored_cars(self, agent_car_list):
         BLEND_RATE = 0.7
         for car_id in agent_car_list:
-            new_color = PRE_COLOR[car_id%len(PRE_COLOR)]
+            new_color = PRE_COLOR[car_id % len(PRE_COLOR)]
             self.colored_cars[car_id] = {
                 Direction.UP: self.change_car_color(self.car_up, new_color, BLEND_RATE),
-                Direction.DOWN: self.change_car_color(self.car_down, new_color, BLEND_RATE),
-                Direction.LEFT: self.change_car_color(self.car_left, new_color, BLEND_RATE),
-                Direction.RIGHT: self.change_car_color(self.car_right, new_color, BLEND_RATE)
+                Direction.DOWN: self.change_car_color(
+                    self.car_down, new_color, BLEND_RATE
+                ),
+                Direction.LEFT: self.change_car_color(
+                    self.car_left, new_color, BLEND_RATE
+                ),
+                Direction.RIGHT: self.change_car_color(
+                    self.car_right, new_color, BLEND_RATE
+                ),
             }
 
     def render(self):
@@ -221,10 +227,10 @@ class Game:
                         self.road_vert, [idx * TILE_SIZE, idy * TILE_SIZE]
                     )
                 elif x == "#":
-                    tile = self.env_tiles[(self.map_seed+(idx*idy+1))%len(self.env_tiles)]
-                    tile = pygame.transform.scale(
-                        tile, (TILE_SIZE, TILE_SIZE)
-                    )
+                    tile = self.env_tiles[
+                        (self.map_seed + (idx * idy + 1)) % len(self.env_tiles)
+                    ]
+                    tile = pygame.transform.scale(tile, (TILE_SIZE, TILE_SIZE))
                     self._screen.blit(tile, [idx * TILE_SIZE, idy * TILE_SIZE])
         # TODO Render points for all cars dict[int, tuple[int, int]] key is an index of agent
         for point in self._map._map_state._points[1]:
@@ -235,8 +241,8 @@ class Game:
             )
 
         for car in self._map._cars.values():
-            pos = self._map._map_state._node_indices[car.road_key[0]]
-            direction = self._map._map_state._edges[car.road_key]
+            pos = self._map._map_state._node_indices[car.get_road_key()[0]]
+            direction = self._map._map_state._edges[car.get_road_key()]
             x, y = pos
 
             if car._car_id in self.colored_cars:
@@ -246,39 +252,47 @@ class Game:
                     Direction.UP: self.car_up,
                     Direction.DOWN: self.car_down,
                     Direction.LEFT: self.car_left,
-                    Direction.RIGHT: self.car_right
+                    Direction.RIGHT: self.car_right,
                 }
 
             match direction:
                 case Direction.UP:
                     self._screen.blit(
-                        pygame.transform.scale(car_images[Direction.UP], (CAR_SIZE, CAR_SIZE)),
+                        pygame.transform.scale(
+                            car_images[Direction.UP], (CAR_SIZE, CAR_SIZE)
+                        ),
                         [
                             (x + 0) * TILE_SIZE + 1 * CAR_SIZE,
-                            (y - 1) * TILE_SIZE - (car.road_pos - 1) * CAR_SIZE,
+                            (y - 1) * TILE_SIZE - (car.get_road_pos() - 1) * CAR_SIZE,
                         ],
                     )
                 case Direction.DOWN:
                     self._screen.blit(
-                        pygame.transform.scale(car_images[Direction.DOWN], (CAR_SIZE, CAR_SIZE)),
+                        pygame.transform.scale(
+                            car_images[Direction.DOWN], (CAR_SIZE, CAR_SIZE)
+                        ),
                         [
                             (x + 0) * TILE_SIZE + 0 * CAR_SIZE,
-                            (y + 1) * TILE_SIZE + (car.road_pos) * CAR_SIZE,
+                            (y + 1) * TILE_SIZE + (car.get_road_pos()) * CAR_SIZE,
                         ],
                     )
                 case Direction.LEFT:
                     self._screen.blit(
-                        pygame.transform.scale(car_images[Direction.LEFT], (CAR_SIZE, CAR_SIZE)),
+                        pygame.transform.scale(
+                            car_images[Direction.LEFT], (CAR_SIZE, CAR_SIZE)
+                        ),
                         [
-                            (x - 0) * TILE_SIZE - (car.road_pos + 1) * CAR_SIZE,
+                            (x - 0) * TILE_SIZE - (car.get_road_pos() + 1) * CAR_SIZE,
                             (y + 0) * TILE_SIZE + 0 * CAR_SIZE,
                         ],
                     )
                 case Direction.RIGHT:
                     self._screen.blit(
-                        pygame.transform.scale(car_images[Direction.RIGHT], (CAR_SIZE, CAR_SIZE)),
+                        pygame.transform.scale(
+                            car_images[Direction.RIGHT], (CAR_SIZE, CAR_SIZE)
+                        ),
                         [
-                            (x + 1) * TILE_SIZE + (car.road_pos) * CAR_SIZE,
+                            (x + 1) * TILE_SIZE + (car.get_road_pos()) * CAR_SIZE,
                             (y + 0) * TILE_SIZE + 1 * CAR_SIZE,
                         ],
                     )

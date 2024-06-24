@@ -181,6 +181,14 @@ class Road:
         """
         return np.count_nonzero(self._road)
 
+    def get_traffic(self) -> int:
+        """Returns the number of cars on the road. Alias for get_number_of_cars()
+
+        Returns:
+            int: The number of cars on the road.
+        """
+        return self.get_number_of_cars()
+
     def get_map_position(self, pos: int) -> tuple[int, int]:
         """Returns the map position for a given road position.
 
@@ -243,6 +251,15 @@ class Road:
         if self._right_node is not None:
             available_turns.append(Action.RIGHT)
         return available_turns
+
+    def get_available_actions(self) -> list[Action]:
+        """Returns a list of available actions from the current road. Alias for
+        get_available_turns()
+
+        Returns:
+            list[Action]: A list of available actions.
+        """
+        return self.get_available_turns()
 
 
 class Direction(IntEnum):
