@@ -1,8 +1,5 @@
 from psi_environment.data.map_state import MapState, Road
 from psi_environment.data.point import Point
-import warnings
-# Code readability improvements are not applicable in this section as no specific code block is provided to refactor or comment.
-
 
 class TestPoints:
     def setup_method(self):
