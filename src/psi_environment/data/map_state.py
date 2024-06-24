@@ -643,7 +643,7 @@ class MapState:
 
         Args:
             n (int): The number of points to add.
-
+            agents_idxs (list[int]): Indexes of agents 
 
         Returns:
             dict[int, tuple[tuple[int, int]]]: A dictionary of point IDs and their
@@ -812,6 +812,7 @@ class MapState:
         Args:
             road_key (tuple[int, int]): The key of the road where the car is located.
             road_pos (int): The position of the car on the road.
+            car_id (int): Id of a car
         """
         car_map_position = self.get_road_position_map_position(road_key, road_pos)
 
