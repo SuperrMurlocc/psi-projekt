@@ -640,12 +640,14 @@ class MapState:
 
         return self._cars
 
-    def add_points(self, n: int, agents_idxs: list[int]) -> dict[int, list[tuple[int, int]]]:
+    def add_points(
+        self, n: int, agents_idxs: list[int]
+    ) -> dict[int, list[tuple[int, int]]]:
         """Adds a specified number of points to the map.
 
         Args:
             n (int): The number of points to add.
-            agents_idxs (list[int]): Indexes of agents 
+            agents_idxs (list[int]): Indexes of agents
 
         Returns:
             dict[int, tuple[tuple[int, int]]]: A dictionary of point IDs and their
@@ -772,7 +774,7 @@ class MapState:
                 car_id, road, road_pos, collect_point
             )
             if car_moved:
-                results.append((car_id, car_moved, car_road_key, car_road_pos))
+                results.append((car_id, car_road_key, car_road_pos))
 
         return results
 
@@ -802,7 +804,9 @@ class MapState:
             self._update_collected_points(car_road_key, car_road_pos, car_id)
         return car_id, True, road.get_key(), road_pos
 
-    def _update_collected_points(self, road_key: tuple[int, int], road_pos: int, car_id: int):
+    def _update_collected_points(
+        self, road_key: tuple[int, int], road_pos: int, car_id: int
+    ):
         """Updates the collected points based on the car's new position.
 
         Args:
@@ -814,11 +818,11 @@ class MapState:
 
         if car_id not in self._points.keys():
             return
-        
+
         agent_points = self._points[car_id]
         for agent_point in agent_points:
             if agent_point == car_map_position:
-                agent_points.pop(agent_point)
+                agent_points.remove(agent_point)
                 break
 
     def _switch_traffic_lights(self):
