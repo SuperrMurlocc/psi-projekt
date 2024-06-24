@@ -1,22 +1,20 @@
-from typing import Type, List
-
-import numpy as np
+from typing import Type
 
 from psi_environment.data.car import Car, DummyAgent
-from psi_environment.data.map_state import MapState, Road
-from psi_environment.data.action import Action
+from psi_environment.data.map_state import MapState
 
 
 class Map:
-    """The Map class manages the initialization of the map state and the agents. It 
-    also provides higher level methods for interacting with the map state and agents, 
+    """The Map class manages the initialization of the map state and the agents. It
+    also provides higher level methods for interacting with the map state and agents,
     like handling game steps and checking if the game is over.
     """
+
     def __init__(
         self,
         random_seed: int,
         n_bots: int = 3,
-        agent_types: List[Type[Car]] | None = None,
+        agent_types: list[Type[Car]] | None = None,
         n_points: int = 3,
         traffic_lights_percentage: float = 0.4,
         traffic_lights_length: int = 10,
@@ -26,13 +24,13 @@ class Map:
         Args:
             random_seed (int): The seed used for random number generation.
             n_bots (int, optional): The number of bots to add to the map. Defaults to 3.
-            agent_type (Type[Car] | None, optional): The type of the agent car. 
+            agent_type (Type[Car] | None, optional): The type of the agent car.
                 Defaults to None.
-            n_points (int, optional): The number of points to be collected on the map. 
+            n_points (int, optional): The number of points to be collected on the map.
                 Defaults to 3.
-            traffic_lights_percentage (float, optional): The percentage of nodes with 
+            traffic_lights_percentage (float, optional): The percentage of nodes with
                 traffic lights. Defaults to 0.4.
-            traffic_lights_length (int, optional): The interval length for switching 
+            traffic_lights_length (int, optional): The interval length for switching
                 traffic lights. Defaults to 10.
         """
         self.n_points = n_points
@@ -63,7 +61,7 @@ class Map:
 
     def step(self):
         """Advances the simulation by one step.
-        This method retrieves actions for each car and sends it to the map state, 
+        This method retrieves actions for each car and sends it to the map state,
         updates the cars position based on the map state response, and switches traffic
         lights at specified intervals.
         """
