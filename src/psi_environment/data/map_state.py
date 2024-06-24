@@ -1,4 +1,4 @@
-import importlib
+import importlib.resources
 from enum import IntEnum
 
 import numpy as np
@@ -600,7 +600,9 @@ class MapState:
         self._cars: dict[int, tuple[tuple[int, int], int]] = {}
         self._points: dict[int, list[Point]] = {}
 
-    def _add_car(self, road_key: tuple[int, int], car_id: int):
+    def _add_car(
+        self, car_id: int, road_key: tuple[int, int], road_pos: int | None = None
+    ):
         """Adds a car to the map at a specified road.
 
         Args:
@@ -608,9 +610,10 @@ class MapState:
             car_id (int): The unique identifier of the car.
         """
         road = self._roads[road_key]
-        pos_idx = np.random.randint(road.length)
-        road.get_road()[pos_idx] = car_id
-        self._cars[car_id] = (road_key, pos_idx)
+        if road_pos is None:
+            road_pos = np.random.randint(road.length)
+        road.get_road()[road_pos] = car_id
+        self._cars[car_id] = (road_key, road_pos)
 
     def add_cars(self, n: int) -> dict[int, tuple[tuple[int, int], int]]:
         """Adds a specified number of cars to the map.
@@ -634,7 +637,7 @@ class MapState:
 
         for i, road_key in enumerate(road_keys):
             car_idx = i + 1
-            self._add_car(road_key, car_idx)
+            self._add_car(car_id=car_idx, road_key=road_key)
 
         return self._cars
 
@@ -667,19 +670,22 @@ class MapState:
 
     def move_cars(
         self, actions: list[tuple[int, Action, bool]]
-    ) -> list[tuple[int, bool, tuple[int, int], int]]:
+    ) -> list[tuple[int, tuple[int, int], int]]:
         """Moves cars based on the given actions.
 
         Args:
             actions (list[tuple[int, Action, bool]]): A list of actions to perform.
 
         Returns:
-            list[tuple[int, bool, tuple[int, int], int]]: A list of results for each
-                car.
+            list[tuple[int, tuple[int, int], int]]: A list of results of the actions. It
+                contains only the cars that moved and their new positions. Cars that
+                have not moved are not included in the list.
         """
         road_actions = {}
         node_actions = {}
         results = []
+
+        actions.sort(key=lambda x: x[1])  # sort by action
         for car_id, action, collect_point in actions:
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
@@ -690,6 +696,8 @@ class MapState:
             else:
                 road_actions[car_id] = (car_id, action, collect_point)
 
+        move_requests = []
+
         for car_id, action, collect_point in road_actions.values():
             car_road_key = self._cars[car_id][0]
             car_road_pos = self._cars[car_id][1]
@@ -697,26 +705,13 @@ class MapState:
 
             if action == Action.FORWARD:
                 next_pos = car_road_pos + 1
-                if current_road[next_pos] == 0:
-                    results.append(
-                        self._move_car(car_id, current_road, next_pos, collect_point)
-                    )
-                    continue
+                move_requests.append((car_id, current_road, next_pos, collect_point))
 
             elif action == Action.BACK:
                 inv_road_key = current_road.get_backward_road_key()
                 next_road = self.get_road(inv_road_key)
                 inv_pos = current_road.get_inverted_position(car_road_pos)
-
-                if next_road[inv_pos] == 0:
-                    results.append(
-                        self._move_car(car_id, next_road, inv_pos, collect_point)
-                    )
-                    continue
-
-            # Any other action on the road is invalid
-            results.append((car_id, False, car_road_key, car_road_pos))
-            continue
+                move_requests.append((car_id, next_road, inv_pos, collect_point))
 
         for car_id, action, collect_point in node_actions.values():
             car_road_key = self._cars[car_id][0]
@@ -728,7 +723,6 @@ class MapState:
                 blocked_road_keys = traffic_light.get_blocked_road_keys()
 
             if current_road.get_key() in blocked_road_keys:
-                results.append((car_id, False, car_road_key, car_road_pos))
                 continue
 
             next_road_key = None
@@ -748,7 +742,6 @@ class MapState:
                 if right_road is not None and right_road_key not in blocked_road_keys:
                     right_car = right_road.get_car_on_last_position()
                     if right_car in node_actions:
-                        results.append((car_id, False, car_road_key, car_road_pos))
                         continue
 
             if action in (Action.LEFT, Action.BACK):
@@ -761,25 +754,26 @@ class MapState:
                         front_car_action = node_actions[front_car][1]
                         # always give way to car driving forward
                         if front_car_action == Action.FORWARD:
-                            results.append((car_id, False, car_road_key, car_road_pos))
                             continue
                         # if turning left, give way to car driving right
                         elif front_car_action == Action.RIGHT and action == Action.LEFT:
-                            results.append((car_id, False, car_road_key, car_road_pos))
                             continue
 
             # TODO fix deadlock if 4 cars arive to the same node
             # TODO check for cars that could move after car blocking them moved away
 
             next_road = self.get_road(next_road_key) if next_road_key else None
-
-            if next_road and next_road.is_front_empty():
-                next_pos = 0
-                results.append(
-                    self._move_car(car_id, next_road, next_pos, collect_point)
-                )
+            if next_road is None:
                 continue
-            results.append((car_id, False, car_road_key, car_road_pos))
+
+            move_requests.append((car_id, next_road, 0, collect_point))
+
+        for car_id, road, road_pos, collect_point in move_requests:
+            car_id, car_moved, car_road_key, car_road_pos = self._move_car(
+                car_id, road, road_pos, collect_point
+            )
+            if car_moved:
+                results.append((car_id, car_moved, car_road_key, car_road_pos))
 
         return results
 
@@ -798,10 +792,13 @@ class MapState:
         car_road_key = self._cars[car_id][0]
         car_road_pos = self._cars[car_id][1]
 
-        current_road = self.get_road(car_road_key)
-        current_road[car_road_pos] = 0
+        if road[road_pos] != 0:
+            return car_id, False, car_road_key, car_road_pos
+
         road[road_pos] = car_id
         self._cars[car_id] = (road.get_key(), road_pos)
+        current_road = self.get_road(car_road_key)
+        current_road[car_road_pos] = 0
         if collect_point:
             self._update_collected_points(car_road_key, car_road_pos, car_id)
         return car_id, True, road.get_key(), road_pos

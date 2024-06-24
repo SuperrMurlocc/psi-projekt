@@ -76,14 +76,12 @@ class Map:
             )
             for car_id, car in self._cars.items()
         ]
-        actions.sort(key=lambda x: x[1])
         action_results = self._map_state.move_cars(actions)
 
-        for car_id, car_moved, car_road_key, car_road_pos in action_results:
+        for car_id, car_road_key, car_road_pos in action_results:
             car = self._cars[car_id]
-            if car_moved:
-                car.road_key = car_road_key
-                car.road_pos = car_road_pos
+            car.road_key = car_road_key
+            car.road_pos = car_road_pos
 
         self._step += 1
         if self._step % self._traffic_lights_length == 0:
