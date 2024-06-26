@@ -1,10 +1,12 @@
 import importlib.resources
 from enum import IntEnum
 from typing_extensions import deprecated
+from copy import deepcopy
 
 import numpy as np
 
 from psi_environment.data.action import Action
+from psi_environment.data.point import Point
 
 NODE_CHARACTER = "x"
 EMPTY_CHARACTER = "#"
@@ -672,7 +674,7 @@ class MapState:
             self._edges, self._adjacency_matrix, traffic_light_percentage
         )
         self._cars: dict[int, tuple[tuple[int, int], int]] = {}
-        self._points: dict[int, list[tuple[int, int]]] = {}
+        self._points: dict[int, list[Point]] = {}
 
     def _add_car(
         self, car_id: int, road_key: tuple[int, int], road_pos: int | None = None
@@ -715,32 +717,42 @@ class MapState:
 
         return self._cars
 
-    def add_points(
-        self, n: int, agents_idxs: list[int]
-    ) -> dict[int, list[tuple[int, int]]]:
-        """Adds a specified number of points to the map.
+    def add_points(self, n: int, agents_idxs: list[int]) -> dict[int, list[Point]]:
+        """Adds a specified number of points to the map, n for each agent.
 
         Args:
             n (int): The number of points to add.
             agents_idxs (list[int]): Indexes of agents
 
         Returns:
-            dict[int, tuple[tuple[int, int]]]: A dictionary of point IDs and their
-                positions.
+            dict[int, list[Point]]: A dictionary of agent IDs and their points.
         """
         road_tile_positions = self.get_road_tiles_map_positions()
-        road_tile_idxs = np.random.choice(
-            len(road_tile_positions), size=n, replace=False
-        )
+        node_tile_positions = self.get_node_tiles_map_positions()
 
-        points: list[tuple[int, int]] = []
+        tile_positions = road_tile_positions + node_tile_positions
+        tile_idxs = np.random.choice(len(tile_positions), size=n, replace=False)
 
-        for road_tile_idx in road_tile_idxs:
-            point_position = road_tile_positions[road_tile_idx]
-            points.append(point_position)
+        points: list[Point] = []
+
+        indicies_node = {
+            position: node for node, position in self._node_indices.items()
+        }
+
+        for tile_idx in tile_idxs:
+            point_position = tile_positions[tile_idx]
+            if point_position in node_tile_positions:
+                node = indicies_node[point_position]
+                point = Point(map_position=point_position, node=node)
+            else:
+                road_positions = self.get_road_position_by_map_position(point_position)
+                point = Point(
+                    map_position=point_position, road_positions=road_positions
+                )
+            points.append(point)
 
         for agent_idx in agents_idxs:
-            self._points[agent_idx] = list(points)
+            self._points[agent_idx] = deepcopy(points)
 
         return self._points
 
@@ -853,7 +865,7 @@ class MapState:
 
         return results
 
-    def _move_car(self, car_id: int, road: Road, road_pos: int):
+    def _move_car(self, car_id: int, next_road: Road, next_road_pos: int):
         """Moves a specific car to a new position.
 
         Args:
@@ -864,37 +876,57 @@ class MapState:
         Returns:
             tuple[int, bool, tuple[int, int], int]: The result of the move operation.
         """
-        car_road_key = self._cars[car_id][0]
-        car_road_pos = self._cars[car_id][1]
+        prev_road_key = self._cars[car_id][0]
+        prev_road_pos = self._cars[car_id][1]
 
-        if road[road_pos] != 0:
-            return car_id, False, car_road_key, car_road_pos
+        if next_road[next_road_pos] != 0:
+            return car_id, False, prev_road_key, prev_road_pos
 
-        road[road_pos] = car_id
-        self._cars[car_id] = (road.get_key(), road_pos)
-        current_road = self.get_road(car_road_key)
-        current_road[car_road_pos] = 0
-        self._update_collected_points(car_road_key, car_road_pos, car_id)
-        return car_id, True, road.get_key(), road_pos
+        next_road[next_road_pos] = car_id
+        next_road_key = next_road.get_key()
+        self._cars[car_id] = (next_road_key, next_road_pos)
+        prev_road = self.get_road(prev_road_key)
+        prev_road[prev_road_pos] = 0
+        self._update_collected_points(
+            prev_road_key, next_road_key, next_road_pos, car_id
+        )
+        return car_id, True, next_road_key, next_road_pos
 
     def _update_collected_points(
-        self, road_key: tuple[int, int], road_pos: int, car_id: int
+        self,
+        prev_road_key: tuple[int, int],
+        next_road_key: tuple[int, int],
+        next_road_pos: int,
+        car_id: int,
     ):
         """Updates the collected points based on the car's new position.
 
         Args:
-            road_key (tuple[int, int]): The key of the road where the car is located.
-            road_pos (int): The position of the car on the road.
+            prev_road_key (tuple[int, int]): The key of the road where the car was 
+                located.
+            next_road_key (tuple[int, int]): The key of the road where the car is 
+                located.
+            next_road_pos (int): The position of the car on the road.
             car_id (int): Id of a car
         """
         if car_id not in self._points.keys():
             return
 
-        car_map_position = self.get_map_position_by_road_position(road_key, road_pos)
-
         agent_points = self._points[car_id]
+        if prev_road_key != next_road_key and next_road_pos == 0:
+            # Car crossed a node
+            node_crossed = self._roads[prev_road_key]._front_node
+            for agent_point in agent_points:
+                if agent_point.node == node_crossed:
+                    agent_points.remove(agent_point)
+                    break
+
+        car_map_position = self.get_map_position_by_road_position(
+            next_road_key, next_road_pos
+        )
+
         for agent_point in agent_points:
-            if agent_point == car_map_position:
+            if agent_point.map_position == car_map_position:
                 agent_points.remove(agent_point)
                 break
 
@@ -916,9 +948,17 @@ class MapState:
                     road_tiles.append((x, y))
         return road_tiles
 
+    def get_node_tiles_map_positions(self) -> list[tuple[int, int]]:
+        """Returns the positions of all node tiles on the map.
+
+        Returns:
+            list[tuple[int, int]]: A list of positions of node tiles.
+        """
+        return list(self._node_indices.values())
+
     def get_road_position_by_map_position(
         self, map_position: tuple[int, int]
-    ) -> list[tuple[int, int]]:
+    ) -> list[tuple[tuple[int, int], int]]:
         road_key = self._indices_road_keys[map_position]
         road = self._roads[road_key]
         backward_road = self._roads[road.get_backward_road_key()]
@@ -998,7 +1038,7 @@ class MapState:
         """
         return self._cars
 
-    def get_points(self) -> dict[int, list[tuple[int, int]]]:
+    def get_points(self) -> dict[int, list[Point]]:
         """Returns the points on the map.
 
         Returns:

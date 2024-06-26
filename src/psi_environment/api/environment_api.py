@@ -1,7 +1,10 @@
+from typing_extensions import deprecated
+
 import numpy as np
 
 from psi_environment.data.map_state import MapState, Road
 from psi_environment.data.action import Action
+from psi_environment.data.point import Point
 
 
 class EnvironmentAPI:
@@ -184,27 +187,50 @@ class EnvironmentAPI:
                 traffic_matrix[i, j] = self.get_specific_traffic(i, j)
         return traffic_matrix
 
-    def get_points_positions_for_all_cars(self) -> dict[int, list[tuple[int, int]]]:
-        """Returns a list of the positions of the points on the map for all cars.
+    def get_points_for_all_cars(self) -> dict[int, list[Point]]:
+        """Returns a list of points on the map for all cars.
 
         Returns:
-            dict[int, list[tuple[int, int]]]: A list of the positions of the points on the map.
+            dict[int, list[Point]]: A mapping from car id to a list of the points on
+                the map.
         """
-        points = self._map_state.get_points()
-        return list(points.values())
-    
-    def get_points_positions_for_specific_car(self, car_id: int) -> list[tuple[int, int]] | None:
-        """Returns a list of the positions of the points on the map for the specific 
-        car.
+        return self._map_state.get_points()
+
+    @deprecated("Use get_points_for_all_cars instead")
+    def get_points_positions_for_all_cars(self) -> dict[int, list[Point]]:
+        """Returns a list of the points on the map for all cars. Alias for
+        get_points_for_all_cars()
+
+        Returns:
+            dict[int, list[Point]]: A mapping from car id to a list of the points on
+                the map.
+        """
+        return self.get_points_for_all_cars()
+
+    def get_points_for_specific_car(self, car_id: int) -> list[Point] | None:
+        """Returns a list of the points on the map for the specific car.
 
         Args:
             car_id (int): Car id
         Returns:
-            list[tuple[int, int]] | None: A list of the positions of the points on the map or None
-                if the car doesn't collect points.
+            list[Point] | None: A list of the points on the map or None if the car
+                doesn't collect points.
         """
         points = self._map_state.get_points().get(car_id)
         return points
+
+    @deprecated("Use get_points_for_specific_car instead")
+    def get_points_positions_for_specific_car(self, car_id: int) -> list[Point] | None:
+        """Returns a list of the points on the map for the specific car. Alias for
+        get_points_for_specific_car()
+
+        Args:
+            car_id (int): Car id
+        Returns:
+            list[Point] | None: A list of the points on the map or None if the car
+                doesn't collect points.
+        """
+        return self.get_points_for_specific_car(car_id)
 
     def get_cars_positions(
         self, car_id_to_ignore: int | None = None
