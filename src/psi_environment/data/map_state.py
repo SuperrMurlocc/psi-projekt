@@ -311,13 +311,6 @@ class Direction(IntEnum):
         return Direction((other - self + 4) % 4)
 
 
-class PositionType(IntEnum):
-    """The PositionType enum represents the possible positions on the map topology."""
-
-    ROAD = 0
-    NODE = 1
-
-
 class TrafficLight:
     """The TrafficLight class represents a traffic light at a specific node, managing
     the blocked directions and switching states"""
@@ -466,15 +459,32 @@ def create_adjacency_matrix(
 
 def get_indices_road_keys(
     node_indices: dict[int, tuple[int, int]], adjacency_matrix: np.ndarray
-):
+) -> dict[tuple[int, int], tuple[int, int]]:
+    """Finds the road keys for the map positions indices. It contains only road keys
+    that are in ascending node order. That means for given map position, there will also
+    be a road with reversed node order, e.g.:
+    map_position = (0, 1)
+    road_key = indices_road_keys[map_position]
+    reversed_road_key = (road_key[1], road_key[0]) # this road also is on given map pos
+
+    Args:
+        node_indices (dict[int, tuple[int, int]]): mapping from node id to map position
+        adjacency_matrix (np.ndarray): adjacency matrix
+
+    Returns:
+        dict[tuple[int, int], tuple[int, int]]: mapping from map position to road key
+    """
     indicies_road_keys = {}
     for x_id, (x_x, x_y) in node_indices.items():
         for y_id, (y_x, y_y) in node_indices.items():
             if x_id > y_id:
                 continue
             if not np.isnan(adjacency_matrix[x_id, y_id]):
+                # this is always true with the rest of our logic, but if it ever happens
+                # to be changed, this will blow up and prevent bugs
                 assert x_x <= y_x
                 assert x_y <= y_y
+
                 keys = [
                     (x, y) for x in range(x_x, y_x + 1) for y in range(x_y, y_y + 1)
                 ]
@@ -902,9 +912,9 @@ class MapState:
         """Updates the collected points based on the car's new position.
 
         Args:
-            prev_road_key (tuple[int, int]): The key of the road where the car was 
+            prev_road_key (tuple[int, int]): The key of the road where the car was
                 located.
-            next_road_key (tuple[int, int]): The key of the road where the car is 
+            next_road_key (tuple[int, int]): The key of the road where the car is
                 located.
             next_road_pos (int): The position of the car on the road.
             car_id (int): Id of a car
@@ -959,12 +969,26 @@ class MapState:
     def get_road_position_by_map_position(
         self, map_position: tuple[int, int]
     ) -> list[tuple[tuple[int, int], int]]:
+        """Get the road positions by the map position.
+
+        Args:
+            map_position (tuple[int, int]): map position
+
+        Returns:
+            list[tuple[tuple[int, int], int]]: road positions that correspond to the map
+                position
+        """
+        road_positions = []
+        if map_position not in self._indices_road_keys:
+            return road_positions
+
         road_key = self._indices_road_keys[map_position]
         road = self._roads[road_key]
         backward_road = self._roads[road.get_backward_road_key()]
-        road_positions = []
+
         road_positions += road.get_road_positions_by_map_position(map_position)
         road_positions += backward_road.get_road_positions_by_map_position(map_position)
+
         return road_positions
 
     def get_adjacency_matrix_size(self) -> int:
