@@ -248,28 +248,28 @@ class Game:
         for cross, light in cross_lights:
             cross_pos = self._crossroads_positions[cross]
             if light._blocked_direction == Direction.UP or light._blocked_direction == Direction.DOWN:
-                if light._up_node:
+                if light._up_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (255, 0, 0),
                         (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - 25),
                         10,
                     )
-                if light._down_node:
+                if light._down_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (255, 0, 0),
                         (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + 25),
                         10,
                     )
-                if light._left_node:
+                if light._left_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (0, 255, 0),
                         (cross_pos[0] + TILE_SIZE // 2 - 25, cross_pos[1] + TILE_SIZE // 2),
                         10,
                     )
-                if light._right_node:
+                if light._right_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (0, 255, 0),
@@ -277,28 +277,28 @@ class Game:
                         10,
                     )
             if light._blocked_direction == Direction.LEFT or light._blocked_direction == Direction.RIGHT:
-                if light._up_node:
+                if light._up_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (0, 255, 0),
                         (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - 25),
                         10,
                     )
-                if light._down_node:
+                if light._down_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (0, 255, 0),
                         (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + 25),
                         10,
                     )
-                if light._left_node:
+                if light._left_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (255, 0, 0),
                         (cross_pos[0] + TILE_SIZE // 2 - 25, cross_pos[1] + TILE_SIZE // 2),
                         10,
                     )
-                if light._right_node:
+                if light._right_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         (255, 0, 0),
