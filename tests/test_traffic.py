@@ -8,6 +8,13 @@ def return_road_end(map_state, road_key):
     return map_state.get_road(road_key).length - 1
 
 
+def basic_test_setup(roads: list):
+    map_state = MapState(0, traffic_light_percentage=0)
+    for car_id, road in enumerate(roads):
+        map_state._add_car(car_id + 1, road, return_road_end(map_state, road))
+    return map_state
+
+
 @pytest.mark.parametrize(
     "car1_road,car2_road,car1_expected_road,car2_expected_road",
     [
@@ -19,12 +26,9 @@ def test_both_cars_move_forward_no_collisions(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
 
-    actions = [(1, Action.FORWARD, False), (2, Action.FORWARD, False)]
+    actions = [(1, Action.FORWARD), (2, Action.FORWARD)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {1: (car1_expected_road, 0), 2: (car2_expected_road, 0)}
@@ -44,11 +48,9 @@ def test_two_cars_no_collisions_first_turns_right(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
 
-    actions = [(1, Action.RIGHT, False), (2, Action.FORWARD, False)]
+    actions = [(1, Action.RIGHT), (2, Action.FORWARD)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {1: (car1_expected_road, 0), 2: (car2_expected_road, 0)}
@@ -64,15 +66,13 @@ def test_two_cars_no_collisions_first_turns_right(
         ((13, 7), (6, 7), (7, 1), (7, 13)),
     ],
 )
-def test_two_cars_no_collision_second_turn_right(
+def test_two_cars_no_collision_second_turns_right(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
 
-    actions = [(1, Action.FORWARD, False), (2, Action.RIGHT, False)]
+    actions = [(1, Action.FORWARD), (2, Action.RIGHT)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {1: (car1_expected_road, 0), 2: (car2_expected_road, 0)}
@@ -92,11 +92,9 @@ def test_two_cars_forward_with_collisions_car1_moves_first(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
 
-    actions = [(1, Action.FORWARD, False), (2, Action.FORWARD, False)]
+    actions = [(1, Action.FORWARD), (2, Action.FORWARD)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {
@@ -122,11 +120,9 @@ def test_two_cars_forward_with_collisions_car1_moves_first(
 def test_two_cars_forward_with_collisions_car2_moves_first(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.FORWARD, False), (2, Action.FORWARD, False)]
+    actions = [(1, Action.FORWARD), (2, Action.FORWARD)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {
@@ -153,14 +149,12 @@ def test_two_cars_forward_with_collisions_car2_moves_first(
         ((8, 7), (13, 7), (7, 6), (7, 6)),
     ],
 )
-def test_two_cars_collisions_first_forward_second_turn_left(
+def test_two_cars_collisions_first_forward_second_turns_left(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.FORWARD, False), (2, Action.LEFT, False)]
+    actions = [(1, Action.FORWARD), (2, Action.LEFT)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {
@@ -190,11 +184,9 @@ def test_two_cars_collisions_first_forward_second_turn_left(
 def test_two_cars_collisions_first_turns_left_second_forward(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.LEFT, False), (2, Action.FORWARD, False)]
+    actions = [(1, Action.LEFT), (2, Action.FORWARD)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {
@@ -228,11 +220,9 @@ def test_two_cars_collisions_first_turns_left_second_forward(
 def test_two_cars_both_turn_right(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.RIGHT, False), (2, Action.RIGHT, False)]
+    actions = [(1, Action.RIGHT), (2, Action.RIGHT)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {1: (car1_expected_road, 0), 2: (car2_expected_road, 0)}
@@ -248,14 +238,12 @@ def test_two_cars_both_turn_right(
         ((8, 7), (13, 7), (7, 13), (7, 6)),
     ],
 )
-def test_two_cars_both_turns_left_car1_moves_first(
+def test_two_cars_both_turn_left_car1_moves_first(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.LEFT, False), (2, Action.LEFT, False)]
+    actions = [(1, Action.LEFT), (2, Action.LEFT)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {
@@ -278,14 +266,12 @@ def test_two_cars_both_turns_left_car1_moves_first(
         ((8, 7), (1, 7), (7, 13), (7, 8)),
     ],
 )
-def test_two_cars_both_turns_left_car2_moves_first(
+def test_two_cars_both_turn_left_car2_moves_first(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.LEFT, False), (2, Action.LEFT, False)]
+    actions = [(1, Action.LEFT), (2, Action.LEFT)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
     expected_result = {
@@ -311,11 +297,9 @@ def test_two_cars_both_turns_left_car2_moves_first(
 def test_two_cars_both_turn_left_both_pass(
     car1_road, car2_road, car1_expected_road, car2_expected_road
 ):
-    actions = [(1, Action.LEFT, False), (2, Action.LEFT, False)]
+    actions = [(1, Action.LEFT), (2, Action.LEFT)]
 
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
+    map_state = basic_test_setup([car1_road, car2_road])
 
     map_state.move_cars(actions)
 
@@ -339,14 +323,12 @@ def test_three_cars_c1_forward_c2_forward_c3_left(
     car3_expected_road,
 ):
     actions = [
-        (1, Action.FORWARD, False),
-        (2, Action.FORWARD, False),
-        (3, Action.LEFT, False),
+        (1, Action.FORWARD),
+        (2, Action.FORWARD),
+        (3, Action.LEFT),
     ]
-    map_state = MapState(0, traffic_light_percentage=0)
-    map_state._add_car(1, car1_road, return_road_end(map_state, car1_road))
-    map_state._add_car(2, car2_road, return_road_end(map_state, car2_road))
-    map_state._add_car(3, car3_road, return_road_end(map_state, car3_road))
+
+    map_state = basic_test_setup([car1_road, car2_road, car3_road])
 
     map_state.move_cars(actions)
 
