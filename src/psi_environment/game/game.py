@@ -245,65 +245,69 @@ class Game:
         cross_lights = self._map._map_state.get_traffic_lights()
         cross_lights = cross_lights.items()
 
+        CIRCLE_OFFSET = TILE_SIZE // 3
+        CIRCLE_RADIUS = TILE_SIZE // 6
+        CIRCLE_COLOR_RED = (255, 0, 0)
+        CIRCLE_COLOR_GREEN = (0, 255, 0)
         for cross, light in cross_lights:
             cross_pos = self._crossroads_positions[cross]
             if light._blocked_direction == Direction.UP or light._blocked_direction == Direction.DOWN:
                 if light._up_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (255, 0, 0),
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - 25),
-                        10,
+                        CIRCLE_COLOR_RED,
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - CIRCLE_OFFSET),
+                        CIRCLE_RADIUS,
                     )
                 if light._down_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (255, 0, 0),
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + 25),
-                        10,
+                        CIRCLE_COLOR_RED,
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + CIRCLE_OFFSET),
+                        CIRCLE_RADIUS,
                     )
                 if light._left_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (0, 255, 0),
-                        (cross_pos[0] + TILE_SIZE // 2 - 25, cross_pos[1] + TILE_SIZE // 2),
-                        10,
+                        CIRCLE_COLOR_GREEN,
+                        (cross_pos[0] + TILE_SIZE // 2 - CIRCLE_OFFSET, cross_pos[1] + TILE_SIZE // 2),
+                        CIRCLE_RADIUS,
                     )
                 if light._right_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (0, 255, 0),
-                        (cross_pos[0] + TILE_SIZE // 2 + 25, cross_pos[1] + TILE_SIZE // 2),
-                        10,
+                        CIRCLE_COLOR_GREEN,
+                        (cross_pos[0] + TILE_SIZE // 2 + CIRCLE_OFFSET, cross_pos[1] + TILE_SIZE // 2),
+                        CIRCLE_RADIUS,
                     )
             if light._blocked_direction == Direction.LEFT or light._blocked_direction == Direction.RIGHT:
                 if light._up_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (0, 255, 0),
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - 25),
-                        10,
+                        CIRCLE_COLOR_GREEN,
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - CIRCLE_OFFSET),
+                        CIRCLE_RADIUS,
                     )
                 if light._down_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (0, 255, 0),
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + 25),
-                        10,
+                        CIRCLE_COLOR_GREEN,
+                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + CIRCLE_OFFSET),
+                        CIRCLE_RADIUS,
                     )
                 if light._left_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (255, 0, 0),
-                        (cross_pos[0] + TILE_SIZE // 2 - 25, cross_pos[1] + TILE_SIZE // 2),
-                        10,
+                        CIRCLE_COLOR_RED,
+                        (cross_pos[0] + TILE_SIZE // 2 - CIRCLE_OFFSET, cross_pos[1] + TILE_SIZE // 2),
+                        CIRCLE_RADIUS,
                     )
                 if light._right_node is not None:
                     pygame.draw.circle(
                         self._screen,
-                        (255, 0, 0),
-                        (cross_pos[0] + TILE_SIZE // 2 + 25, cross_pos[1] + TILE_SIZE // 2),
-                        10,
+                        CIRCLE_COLOR_RED,
+                        (cross_pos[0] + TILE_SIZE // 2 + CIRCLE_OFFSET, cross_pos[1] + TILE_SIZE // 2),
+                        CIRCLE_RADIUS,
                     )
 
         # TODO Render points for all cars dict[int, tuple[int, int]] key is an index of agent
