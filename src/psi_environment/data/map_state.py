@@ -1,5 +1,6 @@
 import importlib.resources
 from enum import IntEnum
+from typing_extensions import deprecated
 
 import numpy as np
 
@@ -210,6 +211,32 @@ class Road:
         diff = np.where(diff != 0, relative_pos * np.sign(diff), 0)
         return tuple(back_indices - diff)
 
+    def get_road_positions_by_map_position(self, map_pos: tuple[int, int]) -> int:
+        """Returns the road position for a given map position.
+
+        Args:
+            map_pos (tuple[int, int]): The map position.
+
+        Raises:
+            ValueError: If the position is out of range.
+
+        Returns:
+            int: The road position corresponding to the map position.
+        """
+        # check if position is in range
+        diff = np.array(self._back_indicies) - np.array(self._front_indicies)
+        pos_diff = np.array(self._back_indicies) - np.array(map_pos)
+        if np.any(diff < 0):
+            diff *= -1
+            pos_diff *= -1
+
+        if not (
+            np.any(pos_diff == 0) and np.all(pos_diff >= 0) and np.any(pos_diff < diff)
+        ):
+            raise ValueError("Position out of range")
+        road_pos = int(np.max(pos_diff) - 1) * self._cars_per_length
+        return [(self.get_key(), road_pos + i) for i in range(self._cars_per_length)]
+
     def is_position_road_end(self, pos_idx: int) -> bool:
         """Checks if a given position index is at the end of the road.
 
@@ -280,6 +307,13 @@ class Direction(IntEnum):
             Direction: The relative direction.
         """
         return Direction((other - self + 4) % 4)
+
+
+class PositionType(IntEnum):
+    """The PositionType enum represents the possible positions on the map topology."""
+
+    ROAD = 0
+    NODE = 1
 
 
 class TrafficLight:
@@ -426,6 +460,27 @@ def create_adjacency_matrix(
                 adjacency_matrix[node_id, neighbor_id] = route_length - 1
 
     return adjacency_matrix
+
+
+def get_indices_road_keys(
+    node_indices: dict[int, tuple[int, int]], adjacency_matrix: np.ndarray
+):
+    indicies_road_keys = {}
+    for x_id, (x_x, x_y) in node_indices.items():
+        for y_id, (y_x, y_y) in node_indices.items():
+            if x_id > y_id:
+                continue
+            if not np.isnan(adjacency_matrix[x_id, y_id]):
+                assert x_x <= y_x
+                assert x_y <= y_y
+                keys = [
+                    (x, y) for x in range(x_x, y_x + 1) for y in range(x_y, y_y + 1)
+                ]
+                keys.remove((x_x, x_y))
+                keys.remove((y_x, y_y))
+                for key in keys:
+                    indicies_road_keys[key] = (x_id, y_id)
+    return indicies_road_keys
 
 
 def create_edges(
@@ -609,6 +664,9 @@ class MapState:
         self._edges = create_edges(self._node_indices, self._adjacency_matrix)
         self._roads = create_roads(
             self._edges, self._adjacency_matrix, self._node_indices
+        )
+        self._indices_road_keys = get_indices_road_keys(
+            self._node_indices, self._adjacency_matrix
         )
         self._traffic_lights = create_traffic_lights(
             self._edges, self._adjacency_matrix, traffic_light_percentage
@@ -832,7 +890,7 @@ class MapState:
         if car_id not in self._points.keys():
             return
 
-        car_map_position = self.get_road_position_map_position(road_key, road_pos)
+        car_map_position = self.get_map_position_by_road_position(road_key, road_pos)
 
         agent_points = self._points[car_id]
         for agent_point in agent_points:
@@ -857,6 +915,17 @@ class MapState:
                 if self._map_array[y][x] in ROAD_CHARACTERS:
                     road_tiles.append((x, y))
         return road_tiles
+
+    def get_road_position_by_map_position(
+        self, map_position: tuple[int, int]
+    ) -> list[tuple[int, int]]:
+        road_key = self._indices_road_keys[map_position]
+        road = self._roads[road_key]
+        backward_road = self._roads[road.get_backward_road_key()]
+        road_positions = []
+        road_positions += road.get_road_positions_by_map_position(map_position)
+        road_positions += backward_road.get_road_positions_by_map_position(map_position)
+        return road_positions
 
     def get_adjacency_matrix_size(self) -> int:
         """Returns the size of the adjacency matrix.
@@ -959,7 +1028,7 @@ class MapState:
         """
         return self._node_indices[node_id]
 
-    def get_road_position_map_position(
+    def get_map_position_by_road_position(
         self, road_key: tuple[int, int], road_pos: int
     ) -> tuple[int, int]:
         """Returns the map position for a specific road position.
@@ -972,3 +1041,19 @@ class MapState:
             tuple[int, int]: The map position corresponding to the road position.
         """
         return self._roads[road_key].get_map_position(road_pos)
+
+    @deprecated("Use get_map_position_by_road_position instead")
+    def get_road_position_map_position(
+        self, road_key: tuple[int, int], road_pos: int
+    ) -> tuple[int, int]:
+        """Returns the road position for a specific map position.
+        Alias for get_map_position_by_road_position, left for backward compatibility.
+
+        Args:
+            road_key (tuple[int, int]): The key of the road.
+            road_pos (int): The position on the road.
+
+        Returns:
+            tuple[int, int]: The road position corresponding to the map position.
+        """
+        return self.get_map_position_by_road_position(road_key, road_pos)
