@@ -2,6 +2,7 @@ from typing import Type
 
 from psi_environment.data.car import Car, DummyAgent
 from psi_environment.data.map_state import MapState
+from psi_environment.data.stop_mode import StopMode
 
 
 class Map:
@@ -18,6 +19,7 @@ class Map:
         n_points: int = 3,
         traffic_lights_percentage: float = 0.4,
         traffic_lights_length: int = 10,
+        stop_mode: StopMode = StopMode.ALL_FINISHED,
     ):
         """Initializes the Map instance.
 
@@ -39,6 +41,7 @@ class Map:
         self._agents: dict[int, Car] = {}
         self._random_seed = random_seed
         self._traffic_lights_length = traffic_lights_length
+        self._stop_mode = stop_mode
 
         n_agents = len(agent_types) if agent_types is not None else 0
 
@@ -84,12 +87,24 @@ class Map:
             self._map_state._switch_traffic_lights()
 
     def is_game_over(self) -> bool:
-        """Checks if the game is over.
+        """Checks if the game is over depending on stop mode.
 
         Returns:
-            bool: True if there are no more points to collect, False otherwise.
+            bool: True if criteria defined by stop mode are fulfilled, False otherwise.
         """
-        return len(self._map_state.get_points()) == 0
+        points = self._map_state.get_points()
+
+        if self._stop_mode == StopMode.ALL_FINISHED:
+            for car, point_list in points.items():
+                if len(point_list) != 0:
+                    return False
+            return True
+        elif self._stop_mode == StopMode.ONE_FINISHED:
+            for car, point_list in points.items():
+                if len(point_list) == 0:
+                    return True
+            return False
+
 
     def get_map_state(self) -> MapState:
         """Returns the reference to the map state.
