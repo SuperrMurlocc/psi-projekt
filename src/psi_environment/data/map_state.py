@@ -233,7 +233,7 @@ class Road:
             pos_diff *= -1
 
         if not (
-            np.any(pos_diff == 0) and np.all(pos_diff >= 0) and np.any(pos_diff < diff)
+            np.any(pos_diff == 0) and np.any(pos_diff > 0) and np.any(pos_diff < diff)
         ):
             raise ValueError("Position out of range")
         road_pos = int(np.max(pos_diff) - 1) * self._cars_per_length
