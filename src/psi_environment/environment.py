@@ -6,6 +6,7 @@ import numpy as np
 from psi_environment.game.game import Game
 from psi_environment.data.map import Map
 from psi_environment.data.car import Car
+from psi_environment.data.stop_mode import StopMode
 
 
 class Environment:
@@ -19,6 +20,7 @@ class Environment:
         traffic_lights_percentage: float = 0.4,
         traffic_lights_length: int = 10,
         random_seed: int = None,
+        stop_mode: StopMode = StopMode.ONE_FINISHED,
     ):
         """Environment class to simulate the problem of a small traffic simulation. The
         goal of the simulation is to collect all points on the map in the minimum number
@@ -66,6 +68,7 @@ class Environment:
             n_points=n_points,
             traffic_lights_percentage=traffic_lights_percentage,
             traffic_lights_length=traffic_lights_length,
+            stop_mode=stop_mode
         )
         self._game = Game(
             self._map, random_seed=random_seed, ticks_per_second=ticks_per_second
