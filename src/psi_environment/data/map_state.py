@@ -229,8 +229,8 @@ class Road:
         diff = np.array(self._back_indicies) - np.array(self._front_indicies)
         pos_diff = np.array(self._back_indicies) - np.array(map_pos)
         if np.any(diff < 0):
-            diff *= -1
-            pos_diff *= -1
+            diff = -diff
+            pos_diff = -pos_diff
 
         if not (
             np.any(pos_diff == 0) and np.any(pos_diff > 0) and np.any(pos_diff < diff)

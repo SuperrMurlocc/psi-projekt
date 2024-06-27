@@ -278,6 +278,17 @@ class EnvironmentAPI:
         return {car_id: len(point_list) if point_list else 0
                 for car_id, point_list in points_dict}
 
+    def get_points_amount_for_specific_cars(self, car_id: int) -> int | None:
+        """Checks how many points the agent has to collect
+
+        Args:
+            car_id: int: The id identifying the car.
+
+        Returns:
+            int | None:  number telling how many points left for the car or None if id is invalid
+        """
+        return self.get_points_amount_for_all_cars().get(car_id)
+
     def get_which_cars_finished(self) -> dict[int, bool]:
         """Checks which agents finished
 
@@ -285,5 +296,16 @@ class EnvironmentAPI:
             dict[int, bool]: A dict that maps car_id to a bool if a car has finished
         """
         points_dict = self.get_points_for_all_cars()
-        return {car_id: not bool(point_list)
+        return {car_id: len(point_list) == 0
                 for car_id, point_list in points_dict}
+
+    def get_if_car_finished(self, car_id: int) -> bool | None:
+        """Checks if the agent finished
+
+        Args:
+            car_id: int: The id identifying the car.
+
+        Returns:
+            bool | None: A bool telling if the car has finished or None if id is invalid
+        """
+        return self.get_which_cars_finished().get(car_id)
