@@ -267,3 +267,23 @@ class EnvironmentAPI:
             return []
 
         return road.get_available_turns()
+
+    def get_points_number_to_collect(self) -> dict[int, int]:
+        """Checks how many each agent has points to collect
+
+        Returns:
+            dict[int, int]: A dict that maps car_id to a number of points to collect
+        """
+        points_dict = self.get_points_for_all_cars()
+        return {car_id: len(point_list) if point_list else 0
+                for car_id, point_list in points_dict}
+
+    def get_if_cars_finished(self) -> dict[int, bool]:
+        """Checks which agents finished
+
+        Returns:
+            dict[int, bool]: A dict that maps car_id to a bool if a car has finished
+        """
+        points_dict = self.get_points_for_all_cars()
+        return {car_id: not bool(point_list)
+                for car_id, point_list in points_dict}
