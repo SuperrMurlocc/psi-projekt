@@ -20,7 +20,7 @@ class Environment:
         traffic_lights_percentage: float = 0.4,
         traffic_lights_length: int = 10,
         random_seed: int = None,
-        stop_mode: StopMode = StopMode.ONE_FINISHED,
+        stop_mode: StopMode = StopMode.ALL_FINISHED,
     ):
         """Environment class to simulate the problem of a small traffic simulation. The
         goal of the simulation is to collect all points on the map in the minimum number
