@@ -314,7 +314,7 @@ class Game:
 
         # TODO Render points for all cars dict[int, tuple[int, int]] key is an index of agent
         for point in self._map._map_state._points[1]:
-            x, y = point[0], point[1]
+            (x, y) = point.map_position
             self._screen.blit(
                 pygame.transform.scale(self.star, (TILE_SIZE, TILE_SIZE)),
                 [x * TILE_SIZE, y * TILE_SIZE],

@@ -1,9 +1,12 @@
 import importlib.resources
 from enum import IntEnum
+from typing_extensions import deprecated
+from copy import deepcopy
 
 import numpy as np
 
 from psi_environment.data.action import Action
+from psi_environment.data.point import Point
 
 NODE_CHARACTER = "x"
 EMPTY_CHARACTER = "#"
@@ -209,6 +212,32 @@ class Road:
         diff = back_indices - front_indices
         diff = np.where(diff != 0, relative_pos * np.sign(diff), 0)
         return tuple(back_indices - diff)
+
+    def get_road_positions_by_map_position(self, map_pos: tuple[int, int]) -> int:
+        """Returns the road position for a given map position.
+
+        Args:
+            map_pos (tuple[int, int]): The map position.
+
+        Raises:
+            ValueError: If the position is out of range.
+
+        Returns:
+            int: The road position corresponding to the map position.
+        """
+        # check if position is in range
+        diff = np.array(self._back_indicies) - np.array(self._front_indicies)
+        pos_diff = np.array(self._back_indicies) - np.array(map_pos)
+        if np.any(diff < 0):
+            diff *= -1
+            pos_diff *= -1
+
+        if not (
+            np.any(pos_diff == 0) and np.any(pos_diff > 0) and np.any(pos_diff < diff)
+        ):
+            raise ValueError("Position out of range")
+        road_pos = int(np.max(pos_diff) - 1) * self._cars_per_length
+        return [(self.get_key(), road_pos + i) for i in range(self._cars_per_length)]
 
     def is_position_road_end(self, pos_idx: int) -> bool:
         """Checks if a given position index is at the end of the road.
@@ -428,6 +457,44 @@ def create_adjacency_matrix(
     return adjacency_matrix
 
 
+def get_indices_road_keys(
+    node_indices: dict[int, tuple[int, int]], adjacency_matrix: np.ndarray
+) -> dict[tuple[int, int], tuple[int, int]]:
+    """Finds the road keys for the map positions indices. It contains only road keys
+    that are in ascending node order. That means for given map position, there will also
+    be a road with reversed node order, e.g.:
+    map_position = (0, 1)
+    road_key = indices_road_keys[map_position]
+    reversed_road_key = (road_key[1], road_key[0]) # this road also is on given map pos
+
+    Args:
+        node_indices (dict[int, tuple[int, int]]): mapping from node id to map position
+        adjacency_matrix (np.ndarray): adjacency matrix
+
+    Returns:
+        dict[tuple[int, int], tuple[int, int]]: mapping from map position to road key
+    """
+    indicies_road_keys = {}
+    for x_id, (x_x, x_y) in node_indices.items():
+        for y_id, (y_x, y_y) in node_indices.items():
+            if x_id > y_id:
+                continue
+            if not np.isnan(adjacency_matrix[x_id, y_id]):
+                # this is always true with the rest of our logic, but if it ever happens
+                # to be changed, this will blow up and prevent bugs
+                assert x_x <= y_x
+                assert x_y <= y_y
+
+                keys = [
+                    (x, y) for x in range(x_x, y_x + 1) for y in range(x_y, y_y + 1)
+                ]
+                keys.remove((x_x, x_y))
+                keys.remove((y_x, y_y))
+                for key in keys:
+                    indicies_road_keys[key] = (x_id, y_id)
+    return indicies_road_keys
+
+
 def create_edges(
     node_indices: dict[int, tuple[int, int]], adjacency_matrix: np.ndarray
 ) -> dict[tuple[int, int], Direction]:
@@ -610,11 +677,14 @@ class MapState:
         self._roads = create_roads(
             self._edges, self._adjacency_matrix, self._node_indices
         )
+        self._indices_road_keys = get_indices_road_keys(
+            self._node_indices, self._adjacency_matrix
+        )
         self._traffic_lights = create_traffic_lights(
             self._edges, self._adjacency_matrix, traffic_light_percentage
         )
         self._cars: dict[int, tuple[tuple[int, int], int]] = {}
-        self._points: dict[int, list[tuple[int, int]]] = {}
+        self._points: dict[int, list[Point]] = {}
 
     def _add_car(
         self, car_id: int, road_key: tuple[int, int], road_pos: int | None = None
@@ -657,32 +727,42 @@ class MapState:
 
         return self._cars
 
-    def add_points(
-        self, n: int, agents_idxs: list[int]
-    ) -> dict[int, list[tuple[int, int]]]:
-        """Adds a specified number of points to the map.
+    def add_points(self, n: int, agents_idxs: list[int]) -> dict[int, list[Point]]:
+        """Adds a specified number of points to the map, n for each agent.
 
         Args:
             n (int): The number of points to add.
             agents_idxs (list[int]): Indexes of agents
 
         Returns:
-            dict[int, tuple[tuple[int, int]]]: A dictionary of point IDs and their
-                positions.
+            dict[int, list[Point]]: A dictionary of agent IDs and their points.
         """
         road_tile_positions = self.get_road_tiles_map_positions()
-        road_tile_idxs = np.random.choice(
-            len(road_tile_positions), size=n, replace=False
-        )
+        node_tile_positions = self.get_node_tiles_map_positions()
 
-        points: list[tuple[int, int]] = []
+        tile_positions = road_tile_positions + node_tile_positions
+        tile_idxs = np.random.choice(len(tile_positions), size=n, replace=False)
 
-        for road_tile_idx in road_tile_idxs:
-            point_position = road_tile_positions[road_tile_idx]
-            points.append(point_position)
+        points: list[Point] = []
+
+        indicies_node = {
+            position: node for node, position in self._node_indices.items()
+        }
+
+        for tile_idx in tile_idxs:
+            point_position = tile_positions[tile_idx]
+            if point_position in node_tile_positions:
+                node = indicies_node[point_position]
+                point = Point(map_position=point_position, node=node)
+            else:
+                road_positions = self.get_road_position_by_map_position(point_position)
+                point = Point(
+                    map_position=point_position, road_positions=road_positions
+                )
+            points.append(point)
 
         for agent_idx in agents_idxs:
-            self._points[agent_idx] = list(points)
+            self._points[agent_idx] = deepcopy(points)
 
         return self._points
 
@@ -795,7 +875,7 @@ class MapState:
 
         return results
 
-    def _move_car(self, car_id: int, road: Road, road_pos: int):
+    def _move_car(self, car_id: int, next_road: Road, next_road_pos: int):
         """Moves a specific car to a new position.
 
         Args:
@@ -806,37 +886,57 @@ class MapState:
         Returns:
             tuple[int, bool, tuple[int, int], int]: The result of the move operation.
         """
-        car_road_key = self._cars[car_id][0]
-        car_road_pos = self._cars[car_id][1]
+        prev_road_key = self._cars[car_id][0]
+        prev_road_pos = self._cars[car_id][1]
 
-        if road[road_pos] != 0:
-            return car_id, False, car_road_key, car_road_pos
+        if next_road[next_road_pos] != 0:
+            return car_id, False, prev_road_key, prev_road_pos
 
-        road[road_pos] = car_id
-        self._cars[car_id] = (road.get_key(), road_pos)
-        current_road = self.get_road(car_road_key)
-        current_road[car_road_pos] = 0
-        self._update_collected_points(car_road_key, car_road_pos, car_id)
-        return car_id, True, road.get_key(), road_pos
+        next_road[next_road_pos] = car_id
+        next_road_key = next_road.get_key()
+        self._cars[car_id] = (next_road_key, next_road_pos)
+        prev_road = self.get_road(prev_road_key)
+        prev_road[prev_road_pos] = 0
+        self._update_collected_points(
+            prev_road_key, next_road_key, next_road_pos, car_id
+        )
+        return car_id, True, next_road_key, next_road_pos
 
     def _update_collected_points(
-        self, road_key: tuple[int, int], road_pos: int, car_id: int
+        self,
+        prev_road_key: tuple[int, int],
+        next_road_key: tuple[int, int],
+        next_road_pos: int,
+        car_id: int,
     ):
         """Updates the collected points based on the car's new position.
 
         Args:
-            road_key (tuple[int, int]): The key of the road where the car is located.
-            road_pos (int): The position of the car on the road.
+            prev_road_key (tuple[int, int]): The key of the road where the car was
+                located.
+            next_road_key (tuple[int, int]): The key of the road where the car is
+                located.
+            next_road_pos (int): The position of the car on the road.
             car_id (int): Id of a car
         """
         if car_id not in self._points.keys():
             return
 
-        car_map_position = self.get_road_position_map_position(road_key, road_pos)
-
         agent_points = self._points[car_id]
+        if prev_road_key != next_road_key and next_road_pos == 0:
+            # Car crossed a node
+            node_crossed = self._roads[prev_road_key]._front_node
+            for agent_point in agent_points:
+                if agent_point.node == node_crossed:
+                    agent_points.remove(agent_point)
+                    break
+
+        car_map_position = self.get_map_position_by_road_position(
+            next_road_key, next_road_pos
+        )
+
         for agent_point in agent_points:
-            if agent_point == car_map_position:
+            if agent_point.map_position == car_map_position:
                 agent_points.remove(agent_point)
                 break
 
@@ -857,6 +957,39 @@ class MapState:
                 if self._map_array[y][x] in ROAD_CHARACTERS:
                     road_tiles.append((x, y))
         return road_tiles
+
+    def get_node_tiles_map_positions(self) -> list[tuple[int, int]]:
+        """Returns the positions of all node tiles on the map.
+
+        Returns:
+            list[tuple[int, int]]: A list of positions of node tiles.
+        """
+        return list(self._node_indices.values())
+
+    def get_road_position_by_map_position(
+        self, map_position: tuple[int, int]
+    ) -> list[tuple[tuple[int, int], int]]:
+        """Get the road positions by the map position.
+
+        Args:
+            map_position (tuple[int, int]): map position
+
+        Returns:
+            list[tuple[tuple[int, int], int]]: road positions that correspond to the map
+                position
+        """
+        road_positions = []
+        if map_position not in self._indices_road_keys:
+            return road_positions
+
+        road_key = self._indices_road_keys[map_position]
+        road = self._roads[road_key]
+        backward_road = self._roads[road.get_backward_road_key()]
+
+        road_positions += road.get_road_positions_by_map_position(map_position)
+        road_positions += backward_road.get_road_positions_by_map_position(map_position)
+
+        return road_positions
 
     def get_adjacency_matrix_size(self) -> int:
         """Returns the size of the adjacency matrix.
@@ -929,7 +1062,7 @@ class MapState:
         """
         return self._cars
 
-    def get_points(self) -> dict[int, list[tuple[int, int]]]:
+    def get_points(self) -> dict[int, list[Point]]:
         """Returns the points on the map.
 
         Returns:
@@ -959,7 +1092,7 @@ class MapState:
         """
         return self._node_indices[node_id]
 
-    def get_road_position_map_position(
+    def get_map_position_by_road_position(
         self, road_key: tuple[int, int], road_pos: int
     ) -> tuple[int, int]:
         """Returns the map position for a specific road position.
@@ -972,3 +1105,19 @@ class MapState:
             tuple[int, int]: The map position corresponding to the road position.
         """
         return self._roads[road_key].get_map_position(road_pos)
+
+    @deprecated("Use get_map_position_by_road_position instead")
+    def get_road_position_map_position(
+        self, road_key: tuple[int, int], road_pos: int
+    ) -> tuple[int, int]:
+        """Returns the road position for a specific map position.
+        Alias for get_map_position_by_road_position, left for backward compatibility.
+
+        Args:
+            road_key (tuple[int, int]): The key of the road.
+            road_pos (int): The position on the road.
+
+        Returns:
+            tuple[int, int]: The road position corresponding to the map position.
+        """
+        return self.get_map_position_by_road_position(road_key, road_pos)
