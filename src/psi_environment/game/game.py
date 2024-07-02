@@ -5,8 +5,6 @@ import importlib.resources
 from psi_environment.data.map import Map
 from enum import IntEnum
 
-TILE_SIZE = 64
-CAR_SIZE = 32
 
 PRE_COLOR = [
     (128, 0, 0),  # maroon
@@ -40,9 +38,12 @@ class Game:
         self._timestep = 0
         self._map = map
         self._crossroads = map.get_map_state().get_map_array()
+        self.tile_size = 64
+        self.car_size = 32
         pygame.init()
         pygame.display.set_caption("Traffic simulation")
-        self._screen = pygame.display.set_mode((1920, 1024))
+        self.aspect_ratio = 1920 / 1024
+        self._screen = pygame.display.set_mode((1920, 1024), pygame.RESIZABLE)
         self._clock = pygame.time.Clock()
         self._ticks_per_second = ticks_per_second
         self._running = True
@@ -53,10 +54,11 @@ class Game:
         for idy, y in enumerate(self._crossroads):
             for idx, x in enumerate(y):
                 if x == "x":
-                    self._crossroads_positions[cros_id] = [idx * TILE_SIZE, idy * TILE_SIZE]
+                    self._crossroads_positions[cros_id] = [
+                        idx * self.tile_size,
+                        idy * self.tile_size,
+                    ]
                     cros_id += 1
-
-
 
     def _init_images(self):
         # road tiles
@@ -134,7 +136,7 @@ class Game:
             self.grass_no_stalk,
             self.brick_tile,
         ]
-                    
+
         self.map_seed = self._map._random_seed
 
     def __del__(self):
@@ -188,12 +190,8 @@ class Game:
             new_color = PRE_COLOR[car_id % len(PRE_COLOR)]
             self.colored_cars[car_id] = {
                 Direction.UP: self.change_color(self.car_up, new_color, BLEND_RATE),
-                Direction.DOWN: self.change_color(
-                    self.car_down, new_color, BLEND_RATE
-                ),
-                Direction.LEFT: self.change_color(
-                    self.car_left, new_color, BLEND_RATE
-                ),
+                Direction.DOWN: self.change_color(self.car_down, new_color, BLEND_RATE),
+                Direction.LEFT: self.change_color(self.car_left, new_color, BLEND_RATE),
                 Direction.RIGHT: self.change_color(
                     self.car_right, new_color, BLEND_RATE
                 ),
@@ -203,6 +201,23 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self._running = False
+            elif event.type == pygame.VIDEORESIZE:
+                new_width = event.w
+                new_height = int(new_width / self.aspect_ratio)
+                self.tile_size = new_width // 30
+                self.car_size = self.tile_size // 2
+                self._screen = pygame.display.set_mode(
+                    (new_width, new_height), pygame.RESIZABLE
+                )
+                cros_id = 0
+                for idy, y in enumerate(self._crossroads):
+                    for idx, x in enumerate(y):
+                        if x == "x":
+                            self._crossroads_positions[cros_id] = [
+                                idx * self.tile_size,
+                                idy * self.tile_size,
+                            ]
+                            cros_id += 1
 
         self._screen.fill("black")
         pygame.font.init()
@@ -212,103 +227,139 @@ class Game:
             for idx, x in enumerate(y):
                 if x == "x":
                     self.crossroad = pygame.transform.scale(
-                        self.crossroad, (TILE_SIZE, TILE_SIZE)
+                        self.crossroad, (self.tile_size, self.tile_size)
                     )
                     text_surface = my_font.render(f"{count}", False, (255, 255, 255))
                     count += 1
                     self._screen.blit(
-                        self.crossroad, [idx * TILE_SIZE, idy * TILE_SIZE]
+                        self.crossroad, [idx * self.tile_size, idy * self.tile_size]
                     )
-                    self._screen.blit(text_surface, [idx * TILE_SIZE, idy * TILE_SIZE])
+                    self._screen.blit(
+                        text_surface, [idx * self.tile_size, idy * self.tile_size]
+                    )
 
                 elif x == "=":
                     self.road_hori = pygame.transform.scale(
-                        self.road_hori, (TILE_SIZE, TILE_SIZE)
+                        self.road_hori, (self.tile_size, self.tile_size)
                     )
                     self._screen.blit(
-                        self.road_hori, [idx * TILE_SIZE, idy * TILE_SIZE]
+                        self.road_hori, [idx * self.tile_size, idy * self.tile_size]
                     )
                 elif x == "|":
                     self.road_vert = pygame.transform.scale(
-                        self.road_vert, (TILE_SIZE, TILE_SIZE)
+                        self.road_vert, (self.tile_size, self.tile_size)
                     )
                     self._screen.blit(
-                        self.road_vert, [idx * TILE_SIZE, idy * TILE_SIZE]
+                        self.road_vert, [idx * self.tile_size, idy * self.tile_size]
                     )
                 elif x == "#":
                     tile = self.env_tiles[
                         (self.map_seed + (idx * idy + 1)) % len(self.env_tiles)
                     ]
-                    tile = pygame.transform.scale(tile, (TILE_SIZE, TILE_SIZE))
-                    self._screen.blit(tile, [idx * TILE_SIZE, idy * TILE_SIZE])
+                    tile = pygame.transform.scale(
+                        tile, (self.tile_size, self.tile_size)
+                    )
+                    self._screen.blit(
+                        tile, [idx * self.tile_size, idy * self.tile_size]
+                    )
 
         cross_lights = self._map._map_state.get_traffic_lights()
         cross_lights = cross_lights.items()
-        
-        lights_radius = TILE_SIZE // 6
-        lights_offset = TILE_SIZE // 2 - lights_radius
-        
+
+        lights_radius = self.tile_size // 6
+        lights_offset = self.tile_size // 2 - lights_radius
+
         CIRCLE_COLOR_RED = (255, 0, 0)
         CIRCLE_COLOR_GREEN = (0, 255, 0)
 
         for cross, light in cross_lights:
             cross_pos = self._crossroads_positions[cross]
-            if light._blocked_direction == Direction.UP or light._blocked_direction == Direction.DOWN:
+            if (
+                light._blocked_direction == Direction.UP
+                or light._blocked_direction == Direction.DOWN
+            ):
                 if light._up_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_RED,
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - lights_offset),
+                        (
+                            cross_pos[0] + self.tile_size // 2,
+                            cross_pos[1] + self.tile_size // 2 - lights_offset,
+                        ),
                         lights_radius,
                     )
                 if light._down_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_RED,
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + lights_offset),
+                        (
+                            cross_pos[0] + self.tile_size // 2,
+                            cross_pos[1] + self.tile_size // 2 + lights_offset,
+                        ),
                         lights_radius,
                     )
                 if light._left_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_GREEN,
-                        (cross_pos[0] + TILE_SIZE // 2 - lights_offset, cross_pos[1] + TILE_SIZE // 2),
+                        (
+                            cross_pos[0] + self.tile_size // 2 - lights_offset,
+                            cross_pos[1] + self.tile_size // 2,
+                        ),
                         lights_radius,
                     )
                 if light._right_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_GREEN,
-                        (cross_pos[0] + TILE_SIZE // 2 + lights_offset, cross_pos[1] + TILE_SIZE // 2),
+                        (
+                            cross_pos[0] + self.tile_size // 2 + lights_offset,
+                            cross_pos[1] + self.tile_size // 2,
+                        ),
                         lights_radius,
                     )
-            if light._blocked_direction == Direction.LEFT or light._blocked_direction == Direction.RIGHT:
+            if (
+                light._blocked_direction == Direction.LEFT
+                or light._blocked_direction == Direction.RIGHT
+            ):
                 if light._up_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_GREEN,
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 - lights_offset),
+                        (
+                            cross_pos[0] + self.tile_size // 2,
+                            cross_pos[1] + self.tile_size // 2 - lights_offset,
+                        ),
                         lights_radius,
                     )
                 if light._down_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_GREEN,
-                        (cross_pos[0] + TILE_SIZE // 2, cross_pos[1] + TILE_SIZE // 2 + lights_offset),
+                        (
+                            cross_pos[0] + self.tile_size // 2,
+                            cross_pos[1] + self.tile_size // 2 + lights_offset,
+                        ),
                         lights_radius,
                     )
                 if light._left_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_RED,
-                        (cross_pos[0] + TILE_SIZE // 2 - lights_offset, cross_pos[1] + TILE_SIZE // 2),
+                        (
+                            cross_pos[0] + self.tile_size // 2 - lights_offset,
+                            cross_pos[1] + self.tile_size // 2,
+                        ),
                         lights_radius,
                     )
                 if light._right_node is not None:
                     pygame.draw.circle(
                         self._screen,
                         CIRCLE_COLOR_RED,
-                        (cross_pos[0] + TILE_SIZE // 2 + lights_offset, cross_pos[1] + TILE_SIZE // 2),
+                        (
+                            cross_pos[0] + self.tile_size // 2 + lights_offset,
+                            cross_pos[1] + self.tile_size // 2,
+                        ),
                         lights_radius,
                     )
 
@@ -316,8 +367,8 @@ class Game:
         for point in self._map._map_state._points[1]:
             (x, y) = point.map_position
             self._screen.blit(
-                pygame.transform.scale(self.star, (TILE_SIZE, TILE_SIZE)),
-                [x * TILE_SIZE, y * TILE_SIZE],
+                pygame.transform.scale(self.star, (self.tile_size, self.tile_size)),
+                [x * self.tile_size, y * self.tile_size],
             )
 
         for car in self._map._cars.values():
@@ -339,41 +390,45 @@ class Game:
                 case Direction.UP:
                     self._screen.blit(
                         pygame.transform.scale(
-                            car_images[Direction.UP], (CAR_SIZE, CAR_SIZE)
+                            car_images[Direction.UP], (self.car_size, self.car_size)
                         ),
                         [
-                            (x + 0) * TILE_SIZE + 1 * CAR_SIZE,
-                            (y - 1) * TILE_SIZE - (car.get_road_pos() - 1) * CAR_SIZE,
+                            (x + 0) * self.tile_size + 1 * self.car_size,
+                            (y - 1) * self.tile_size
+                            - (car.get_road_pos() - 1) * self.car_size,
                         ],
                     )
                 case Direction.DOWN:
                     self._screen.blit(
                         pygame.transform.scale(
-                            car_images[Direction.DOWN], (CAR_SIZE, CAR_SIZE)
+                            car_images[Direction.DOWN], (self.car_size, self.car_size)
                         ),
                         [
-                            (x + 0) * TILE_SIZE + 0 * CAR_SIZE,
-                            (y + 1) * TILE_SIZE + (car.get_road_pos()) * CAR_SIZE,
+                            (x + 0) * self.tile_size + 0 * self.car_size,
+                            (y + 1) * self.tile_size
+                            + (car.get_road_pos()) * self.car_size,
                         ],
                     )
                 case Direction.LEFT:
                     self._screen.blit(
                         pygame.transform.scale(
-                            car_images[Direction.LEFT], (CAR_SIZE, CAR_SIZE)
+                            car_images[Direction.LEFT], (self.car_size, self.car_size)
                         ),
                         [
-                            (x - 0) * TILE_SIZE - (car.get_road_pos() + 1) * CAR_SIZE,
-                            (y + 0) * TILE_SIZE + 0 * CAR_SIZE,
+                            (x - 0) * self.tile_size
+                            - (car.get_road_pos() + 1) * self.car_size,
+                            (y + 0) * self.tile_size + 0 * self.car_size,
                         ],
                     )
                 case Direction.RIGHT:
                     self._screen.blit(
                         pygame.transform.scale(
-                            car_images[Direction.RIGHT], (CAR_SIZE, CAR_SIZE)
+                            car_images[Direction.RIGHT], (self.car_size, self.car_size)
                         ),
                         [
-                            (x + 1) * TILE_SIZE + (car.get_road_pos()) * CAR_SIZE,
-                            (y + 0) * TILE_SIZE + 1 * CAR_SIZE,
+                            (x + 1) * self.tile_size
+                            + (car.get_road_pos()) * self.car_size,
+                            (y + 0) * self.tile_size + 1 * self.car_size,
                         ],
                     )
 
