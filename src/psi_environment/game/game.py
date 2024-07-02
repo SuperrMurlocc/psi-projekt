@@ -60,12 +60,13 @@ class Game:
         self._timestep = 0
         self._map = map
         self._crossroads = map.get_map_state().get_map_array()
-        self.tile_size = 64
-        self.car_size = 32
+        
         pygame.init()
         pygame.display.set_caption("Traffic simulation")
-        self.aspect_ratio = 1920 / 1024
-        self._screen = pygame.display.set_mode((1920, 1024), pygame.RESIZABLE)
+        self.aspect_ratio = 1280 / 720
+        self._screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        self.tile_size = 1280 // 30
+        self.car_size = self.tile_size // 2
         self._clock = pygame.time.Clock()
         self._ticks_per_second = ticks_per_second
         self._running = True
@@ -269,7 +270,7 @@ class Game:
                             ]
                             cros_id += 1
 
-        self._screen.fill("black")
+        self._screen.fill((115,116,27))
         pygame.font.init()
         my_font = pygame.font.SysFont("Comic Sans MS", 10)
         count = 0
