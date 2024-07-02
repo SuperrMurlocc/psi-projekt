@@ -127,6 +127,9 @@ class Game:
 
         self.colored_cars = {}
         self.create_colored_cars(self._agents.keys())
+        
+        self.colored_stars = {}
+        self.create_colored_stars(self._agents.keys())
 
         self.env_tiles = [
             self.grass_flower_yellow,
@@ -195,7 +198,14 @@ class Game:
                 Direction.RIGHT: self.change_color(
                     self.car_right, new_color, BLEND_RATE
                 ),
-            }
+            } 
+   
+    def create_colored_stars(self, agent_car_list):
+        BLEND_RATE = 0.7
+        for car_id in agent_car_list:
+            new_color = PRE_COLOR[car_id % len(PRE_COLOR)]
+            self.colored_stars[car_id] = self.change_color(self.star, new_color, BLEND_RATE)
+
 
     def render(self):
         for event in pygame.event.get():
@@ -362,14 +372,17 @@ class Game:
                         ),
                         lights_radius,
                     )
-
-        # TODO Render points for all cars dict[int, tuple[int, int]] key is an index of agent
-        for point in self._map._map_state._points[1]:
-            (x, y) = point.map_position
-            self._screen.blit(
-                pygame.transform.scale(self.star, (self.tile_size, self.tile_size)),
-                [x * self.tile_size, y * self.tile_size],
-            )
+                    
+        for car_id, agent_points in zip(self._map._map_state._points ,self._map._map_state._points.values()):
+            colored_star = self.colored_stars[car_id]
+            for point_id, point in enumerate(agent_points):
+                (x, y) = point.map_position
+                self._screen.blit(
+                    pygame.transform.scale(colored_star, (self.tile_size, self.tile_size)),
+                    [x * self.tile_size, y * self.tile_size],
+                )  
+                text_surface = my_font.render(f"{point_id}", False, (0, 0, 0))
+                self._screen.blit(text_surface, [x * self.tile_size + self.tile_size // 2.2, y * self.tile_size + self.tile_size // 2.3])
 
         for car in self._map._cars.values():
             pos = self._map._map_state._node_indices[car.get_road_key()[0]]
