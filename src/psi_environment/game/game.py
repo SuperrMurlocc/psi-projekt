@@ -32,6 +32,28 @@ class Direction(IntEnum):
     LEFT = 3
 
 
+class Particle:
+    def __init__(self, pos, direction, color, lifespan):
+        self.pos = pos
+        self.direction = direction
+        self.color = color
+        self.lifespan = lifespan
+        self.age = 0
+
+    def update(self):
+        self.age += 1
+        if self.age < self.lifespan:
+            self.pos[0] += self.direction[0]
+            self.pos[1] += self.direction[1]
+            alpha = int((1 - self.age / self.lifespan) * 255)
+            self.color = (self.color[0], self.color[1], self.color[2], alpha)
+        else:
+            self.color = (self.color[0], self.color[1], self.color[2], 0)
+
+    def is_alive(self):
+        return self.age < self.lifespan
+
+
 class Game:
     def __init__(self, map: Map, random_seed: int = None, ticks_per_second: int = 10):
         self._random_seed = random_seed
@@ -48,6 +70,7 @@ class Game:
         self._ticks_per_second = ticks_per_second
         self._running = True
         self._agents = self._map._agents
+        self.particles = []
         self._init_images()
         self._crossroads_positions = dict()
         cros_id = 0
@@ -142,11 +165,28 @@ class Game:
 
         self.map_seed = self._map._random_seed
 
+
+    def update_particles(self):
+        for particle in self.particles:
+            particle.update()
+        self.particles = [p for p in self.particles if p.is_alive()]
+
+    def create_particles(self, car_pos, direction, color):
+        for _ in range(5):  # Create 5 particles per update
+            offset = [random.randint(-5, 5), random.randint(-5, 5)]
+            particle_pos = [car_pos[0] + self.car_size // 2 + offset[0], car_pos[1] + self.car_size // 2 + offset[1]]
+            particle_direction = [direction[0] * random.uniform(0.5, 1.5), direction[1] * random.uniform(0.5, 1.5)]
+            particle_color = color
+            lifespan = random.randint(3, 10)  # Lifespan between 20 and 40 frames
+            self.particles.append(Particle(particle_pos, particle_direction, particle_color, lifespan))
+
+
     def __del__(self):
         pygame.quit()
 
     def step(self):
         self._timestep += 1
+        self.update_particles()
         self.render()
         self.is_running()
 
@@ -401,49 +441,71 @@ class Game:
 
             match direction:
                 case Direction.UP:
+                    car_pos =[
+                        (x + 0) * self.tile_size + 1 * self.car_size,
+                        (y - 1) * self.tile_size
+                        - (car.get_road_pos() - 1) * self.car_size,
+                    ]
                     self._screen.blit(
                         pygame.transform.scale(
                             car_images[Direction.UP], (self.car_size, self.car_size)
                         ),
-                        [
-                            (x + 0) * self.tile_size + 1 * self.car_size,
-                            (y - 1) * self.tile_size
-                            - (car.get_road_pos() - 1) * self.car_size,
-                        ],
+                        car_pos
                     )
+                    if car._car_id in self._map._agents:
+                        self.create_particles(car_pos, [0, -1], PRE_COLOR[car._car_id % len(PRE_COLOR)])
+                        
                 case Direction.DOWN:
+                    car_pos = [
+                        (x + 0) * self.tile_size + 0 * self.car_size,
+                        (y + 1) * self.tile_size
+                        + (car.get_road_pos()) * self.car_size,
+                    ]
                     self._screen.blit(
                         pygame.transform.scale(
                             car_images[Direction.DOWN], (self.car_size, self.car_size)
                         ),
-                        [
-                            (x + 0) * self.tile_size + 0 * self.car_size,
-                            (y + 1) * self.tile_size
-                            + (car.get_road_pos()) * self.car_size,
-                        ],
+                        car_pos
                     )
+                    if car._car_id in self._map._agents:
+                        self.create_particles(car_pos, [0, 1], PRE_COLOR[car._car_id % len(PRE_COLOR)])
+                    
                 case Direction.LEFT:
+                    car_pos = [
+                            (x - 0) * self.tile_size
+                            - (car.get_road_pos() + 1) * self.car_size,
+                            (y + 0) * self.tile_size + 0 * self.car_size,
+                        ]
                     self._screen.blit(
                         pygame.transform.scale(
                             car_images[Direction.LEFT], (self.car_size, self.car_size)
                         ),
-                        [
-                            (x - 0) * self.tile_size
-                            - (car.get_road_pos() + 1) * self.car_size,
-                            (y + 0) * self.tile_size + 0 * self.car_size,
-                        ],
+                        car_pos
                     )
+                    if car._car_id in self._map._agents:
+                        self.create_particles(car_pos, [-1, 0], PRE_COLOR[car._car_id % len(PRE_COLOR)])
+                        
                 case Direction.RIGHT:
+                    car_pos = [
+                            (x + 1) * self.tile_size
+                            + (car.get_road_pos()) * self.car_size,
+                            (y + 0) * self.tile_size + 1 * self.car_size,
+                        ]
                     self._screen.blit(
                         pygame.transform.scale(
                             car_images[Direction.RIGHT], (self.car_size, self.car_size)
                         ),
-                        [
-                            (x + 1) * self.tile_size
-                            + (car.get_road_pos()) * self.car_size,
-                            (y + 0) * self.tile_size + 1 * self.car_size,
-                        ],
+                        car_pos
                     )
+                    if car._car_id in self._map._agents:
+                        self.create_particles(car_pos, [1, 0], PRE_COLOR[car._car_id % len(PRE_COLOR)])
+
+        for particle in self.particles:
+            if particle.is_alive():
+                s = pygame.Surface((self.car_size // 8, self.car_size // 8), pygame.SRCALPHA)
+                s.fill(particle.color)
+                self._screen.blit(s, particle.pos)
+
 
         pygame.display.update()
         pygame.display.flip()
