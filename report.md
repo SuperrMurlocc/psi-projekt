@@ -34,7 +34,7 @@ Agenci mają za zadanie zbierać punkty, które mogą znajdować się na kafelka
 - jeżeli punkt znajduje się na kafelku z drogą, samochód agenta musi znaleźć się na jednej z 4 pozycji kafelka drogi;
 - jeżeli punkt znajduje się na kafelku ze skrzyżowaniem, samochód agenta musi wykonać dowolną akcję przejechania przez skrzyżowanie (włącznie z zawracaniem), przy czym musi być to dozwolona akcja (pozycja samochodu po wykonaniu akcji została zmieniona).
 
-Symulacja kończy się w momencie, gdy jeden lub wszyscy agenci zbiorą swoje punkty w zależności od wybranego trybu.
+Symulacja kończy się w momencie, gdy jeden lub wszyscy agenci zbiorą swoje punkty (w zależności od wybranego trybu).
 
 ### Architektura środowiska
 Środowisko zostało napisane w postaci biblioteki Pythonowej, którą można zainstalować po pobraniu kodu z repozytorium GitHub.
