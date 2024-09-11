@@ -34,7 +34,7 @@ Agenci mają za zadanie zbierać punkty, które mogą znajdować się na kafelka
 - jeżeli punkt znajduje się na kafelku z drogą, samochód agenta musi znaleźć się na jednej z 4 pozycji kafelka drogi;
 - jeżeli punkt znajduje się na kafelku ze skrzyżowaniem, samochód agenta musi wykonać dowolną akcję przejechania przez skrzyżowanie (włącznie z zawracaniem), przy czym musi być to dozwolona akcja (pozycja samochodu po wykonaniu akcji została zmieniona).
 
-Symulacja kończy się w momencie, gdy jeden lub wszyscy agenci zbiorą swoje punkty (w zależności od wybranego trybu.
+Symulacja kończy się w momencie, gdy jeden lub wszyscy agenci zbiorą swoje punkty (w zależności od wybranego trybu).
 
 ### Architektura środowiska
 Środowisko zostało napisane w postaci biblioteki Pythonowej, którą można zainstalować po pobraniu kodu z repozytorium GitHub.
@@ -45,6 +45,39 @@ Symulacja kończy się w momencie, gdy jeden lub wszyscy agenci zbiorą swoje pu
  
 #### Frontend
 
+Frontend środowiska został zaprojektowany jako prosty interfejs graficzny umożliwiający wizualizację symulacji w czasie rzeczywistym. Jego celem jest przedstawienie stanu mapy, poruszających się samochodów oraz elementów interaktywnych w sposób czytelny i efektywny.
+
+##### Implementacja
+
+Frontend został zaimplementowany przy użyciu biblioteki **Pygame**, co pozwala na dynamiczne renderowanie grafiki 2D. Widok jest aktualizowany w pętli, a każda zmiana w stanie środowiska przekłada się na odpowiednią aktualizację wyświetlanego obrazu. Cała interakcja odbywa się w czasie rzeczywistym, co zapewnia płynne działanie symulacji. Użytkownik może dowolnie zmieniać rozmiar okna.
+
+-  **Definicje kolorów** - PRE_COLOR to lista predefiniowanych kolorów używanych do kolorowania pojazdów i cząsteczek (ang. "particles").
+- **Kierunki** - Direction to wyliczenie (IntEnum) reprezentujące możliwe kierunki poruszania się obiektów, takich jak pojazdy.
+- **Cząsteczki (Particles)** - Klasa Particle definiuje cząsteczki, które zmieniają swoje położenie i kolor wraz z upływem czasu. Jest to przydatne do efektów wizualnych, takich jak dym czy ślady opon.
+- **Inicjalizacja obrazów** - Funkcja _init_images ładuje grafiki reprezentujące różne elementy mapy, takie jak drogi, pojazdy czy środowisko (trawa, cegły).
+- **Renderowanie** - Kluczowa funkcja render odpowiada za rysowanie wszystkich elementów na ekranie: skrzyżowań, dróg, świateł, pojazdów oraz cząsteczek. Obsługuje również interakcję z użytkownikiem, np. zmiany rozmiaru okna.
+
+##### Widok mapy
+
+Mapa środowiska składa się z siatki kafelków, które są wizualizowane w oknie symulacji. Każdy typ kafelka jest graficznie reprezentowany w następujący sposób:
+- **Drogi** są przedstawiane jako prostokąty o szarym kolorze, symbolizujące pasy ruchu, po których poruszają się samochody.
+- **Skrzyżowania** są specjalnie oznaczone i w przypadku obecności sygnalizacji świetlnej, kolory świateł są dynamicznie aktualizowane (czerwony lub zielony).
+- **Trawa** (obszary niedostępne dla ruchu) są zaznaczone na zielono, aby odróżnić je od dróg.
+- **Punkty do zebrania** są symbolizowane przez kolorowe gwiazdki, które pojawiają się losowo na kafelkach z drogą lub skrzyżowaniami. Kolor gwiazki odpowiada kolorowi agenta, który ma ją zebrać.
+
+##### Samochody
+
+Samochody są kluczowym elementem symulacji i są wyświetlane jako kolorowe samochodziki na mapie:
+- **Samochody sterowane przez agentów** są reprezentowane przez różne kolory, aby łatwo je odróżnić. Kolor każdego samochodu zależy od agenta, który nim steruje.
+- **Boty** (samochody sterowane przez środowisko) są zaznaczone na szaro i poruszają się w sposób pseudolosowy.
+
+Każdy ruch samochodu jest odzwierciedlany w czasie rzeczywistym w trakcie kolejnych interwałów, co pozwala użytkownikowi na bieżąco śledzić postępy agentów w zbieraniu punktów.
+
+Każde z samochodów posiada swoją animację jazdy. Samochody sterowane przez agentów zostawiaja za sobą particle, które imitują dym.
+
+##### Aktualizacja widoku
+
+Mapa jest odświeżana po każdym interwale czasowym symulacji. Backend przekazuje stan mapy do frontendu, który na tej podstawie aktualizuje pozycje samochodów, kolory świateł na skrzyżowaniach, a także pozycje punktów. Widok dynamicznie się zmienia, umożliwiając obserwację ruchu pojazdów i interakcji pomiędzy nimi.
 
 
 #### Backend
